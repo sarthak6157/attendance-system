@@ -10,9 +10,10 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from models.models import User
 
-SECRET_KEY = os.getenv("SECRET_KEY", "mysecretkey12345attendance2025")
+SECRET_KEY = os.getenv("SECRET_KEY", "SmartAttendance2025TMU@SecretKey#Sarthak")
 ALGORITHM  = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+
 pwd_context   = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
@@ -32,13 +33,18 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
+    if "sub" in to_encode:
+        to_encode["sub"] = str(to_encode["sub"])
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
-    except JWTError:
+        sub = payload.get("sub")
+        if sub is None:
+            raise HTTPException(status_code=401, detail="Could not validate credentials")
+        user_id = int(sub)
+    except (JWTError, ValueError, TypeError):
         raise HTTPException(status_code=401, detail="Could not validate credentials")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
