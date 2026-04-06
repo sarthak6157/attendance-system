@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Attendance System — TMU</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+:root {
+  --primary: #1a3c6e; --accent: #f08e1b; --accent2: #e63946;
+  --success: #2d9e6b; --bg: #f0f4fa; --card: #ffffff;
+  --text: #1a1a2e; --muted: #6b7280; --border: #dde3ef;
+  --sidebar-w: 260px; --navbar-h: 60px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.page{display:none;min-height:100vh;}
+.page.active{display:flex;flex-direction:column;}
+
+/* NAVBAR */
+.navbar{height:var(--navbar-h);background:var(--primary);color:#fff;display:flex;align-items:center;padding:0 20px;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px #0003;}
+.navbar .brand{font-weight:800;font-size:1.1rem;letter-spacing:-.5px;display:flex;align-items:center;gap:8px;}
+.navbar .brand span{background:var(--accent);color:#fff;border-radius:6px;padding:2px 8px;font-size:.8rem;}
+.navbar-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.user-chip{background:#ffffff22;border-radius:20px;padding:4px 12px 4px 6px;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;position:relative;}
+.user-chip .av{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;}
+.ddmenu{position:absolute;top:38px;right:0;background:#fff;border-radius:10px;box-shadow:0 8px 30px #0002;min-width:180px;overflow:hidden;z-index:200;display:none;}
+.ddmenu a{display:block;padding:10px 16px;color:var(--text);text-decoration:none;font-size:.9rem;}
+.ddmenu a:hover{background:var(--bg);}
+.ddmenu a.danger{color:var(--accent2);}
+.user-chip:hover .ddmenu{display:block;}
+.nav-btn{background:#ffffff22;border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:.85rem;font-family:inherit;}
+.nav-btn:hover{background:var(--accent);}
+
+/* LAYOUT */
+.app-shell{display:flex;flex:1;}
+.sidebar{width:var(--sidebar-w);background:var(--primary);min-height:calc(100vh - var(--navbar-h));padding:20px 0;flex-shrink:0;}
+.sidebar .user-info{padding:0 20px 20px;border-bottom:1px solid #ffffff22;margin-bottom:10px;}
+.sidebar .user-info .name{font-weight:700;font-size:1rem;color:#fff;}
+.sidebar .user-info .role-badge{font-size:.75rem;color:#ffffffaa;background:#ffffff22;border-radius:10px;padding:2px 10px;display:inline-block;margin-top:4px;}
+.sidebar nav a{display:flex;align-items:center;gap:10px;padding:10px 20px;color:#ffffffcc;text-decoration:none;font-size:.9rem;border-left:3px solid transparent;transition:.15s;}
+.sidebar nav a:hover,.sidebar nav a.active{background:#ffffff18;color:#fff;border-left-color:var(--accent);}
+.sidebar nav a i{width:18px;text-align:center;}
+.nav-section{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:#ffffff66;padding:14px 20px 4px;}
+.main-content{flex:1;padding:28px;overflow-y:auto;min-height:calc(100vh - var(--navbar-h));}
+
+/* CARDS */
+.card{background:var(--card);border-radius:14px;padding:22px;box-shadow:0 2px 12px #00000010;border:1px solid var(--border);margin-bottom:0;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--card);border-radius:14px;padding:20px;border:1px solid var(--border);display:flex;align-items:center;gap:16px;}
+.stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;}
+.stat-val{font-size:1.8rem;font-weight:800;line-height:1;}
+.stat-lbl{font-size:.8rem;color:var(--muted);margin-top:3px;}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:.88rem;}
+.tbl th{background:var(--bg);padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.5px;}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--bg);}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;}
+.bg-green{background:#d1fae5;color:#065f46;}
+.bg-orange{background:#fef3c7;color:#92400e;}
+.bg-red{background:#fee2e2;color:#991b1b;}
+.bg-blue{background:#dbeafe;color:#1e40af;}
+.bg-gray{background:#f3f4f6;color:#374151;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:.88rem;font-family:inherit;font-weight:500;transition:.15s;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:#0f2a52;}
+.btn-accent{background:var(--accent);color:#fff;}
+.btn-accent:hover{background:#d47a0e;}
+.btn-success{background:var(--success);color:#fff;}
+.btn-danger{background:var(--accent2);color:#fff;}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text);}
+.btn-outline:hover{background:var(--bg);}
+.btn-sm{padding:5px 12px;font-size:.8rem;}
+.btn:disabled{opacity:.6;cursor:not-allowed;}
+
+/* FORMS */
+.form-group{margin-bottom:16px;}
+.form-label{display:block;font-size:.85rem;font-weight:600;margin-bottom:6px;}
+.form-control{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;font-family:inherit;background:var(--card);transition:.15s;}
+.form-control:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px #1a3c6e18;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 10px center;background-size:12px;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:#00000066;z-index:300;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:16px;padding:28px;max-width:520px;width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px #0003;}
+.modal-box h3{font-size:1.2rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px;}
+.toast-item{background:var(--primary);color:#fff;padding:12px 18px;border-radius:10px;font-size:.88rem;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px #0003;animation:slideIn .3s ease;max-width:320px;}
+.toast-item.success{background:var(--success);}
+.toast-item.error{background:var(--accent2);}
+.toast-item.warning{background:var(--accent);}
+@keyframes slideIn{from{transform:translateX(60px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* LOGIN */
+#loginPage{background:linear-gradient(135deg,#0f1e3d 0%,#1a3c6e 50%,#0f2a52 100%);align-items:center;justify-content:center;}
+.login-card{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 80px #00000044;}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .circle{width:64px;height:64px;background:var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 12px;color:#fff;}
+.login-tabs{display:flex;background:var(--bg);border-radius:8px;padding:3px;margin-bottom:22px;}
+.login-tab{flex:1;padding:8px;text-align:center;border-radius:6px;cursor:pointer;font-size:.88rem;font-weight:500;color:var(--muted);transition:.15s;}
+.login-tab.active{background:var(--primary);color:#fff;}
+.input-icon{position:relative;}
+.input-icon i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.9rem;}
+.input-icon .form-control{padding-left:36px;}
+
+/* QR */
+.qr-box{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px;background:var(--bg);border-radius:12px;}
+.qr-timer{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:600;color:var(--accent2);}
+
+/* SCAN STEPS */
+.scan-step{background:var(--card);border-radius:14px;padding:24px;width:100%;max-width:480px;text-align:center;border:1.5px solid var(--border);}
+.scan-step.done{border-color:var(--success);}
+.scan-step.pending{opacity:.5;pointer-events:none;}
+.step-num{width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;margin:0 auto 12px;}
+.step-num.done{background:var(--success);}
+.camera-box{width:100%;max-width:320px;height:240px;background:#000;border-radius:10px;overflow:hidden;position:relative;margin:0 auto;}
+.camera-box video{width:100%;height:100%;object-fit:cover;}
+.cam-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#00000088;color:#fff;font-size:.9rem;}
+
+/* MISC */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
+.page-header h2{font-size:1.3rem;font-weight:700;}
+.section-title{font-size:1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.empty-state{text-align:center;padding:40px;color:var(--muted);}
+.empty-state i{font-size:2.5rem;margin-bottom:10px;display:block;}
+.search-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.pct-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+.pct-bar-fill{height:100%;border-radius:4px;background:var(--success);transition:width .5s;}
+.pct-bar-fill.warn{background:var(--accent);}
+.pct-bar-fill.danger{background:var(--accent2);}
+.alert{padding:12px 16px;border-radius:8px;font-size:.88rem;margin-bottom:16px;}
+.alert-info{background:#dbeafe;color:#1e40af;}
+.alert-warning{background:#fef3c7;color:#92400e;}
+.alert-success{background:#d1fae5;color:#065f46;}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid #ffffff44;border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Loading overlay */
+#loadingOverlay{position:fixed;inset:0;background:#1a3c6ecc;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;color:#fff;font-size:1.1rem;}
+#loadingOverlay .big-spinner{width:50px;height:50px;border:4px solid #ffffff44;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+
+@media(max-width:768px){
+  .sidebar{display:none;}
+  .form-row{grid-template-columns:1fr;}
+  .main-content{padding:16px;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display:none;">
+  <div class="big-spinner"></div>
+  <div id="loadingMsg">Loading...</div>
+</div>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="loginPage" class="page active">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="circle"><i class="fa-solid fa-graduation-cap"></i></div>
+      <h1 style="font-size:1.4rem;font-weight:800;color:var(--primary);">Smart Attendance</h1>
+      <p style="color:var(--muted);font-size:.85rem;">Teerthanker Mahaveer University</p>
+    </div>
+    <div class="login-tabs">
+      <div class="login-tab active" onclick="setLoginRole('student')">Student</div>
+      <div class="login-tab" onclick="setLoginRole('faculty')">Faculty</div>
+      <div class="login-tab" onclick="setLoginRole('admin')">Admin</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="loginIdLabel">Enrollment No.</label>
+      <div class="input-icon">
+        <i class="fa-solid fa-id-card"></i>
+        <input class="form-control" id="loginId" placeholder="Enter your ID" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <div class="input-icon">
+        <i class="fa-solid fa-lock"></i>
+        <input class="form-control" id="loginPass" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+    <button class="btn btn-primary" id="loginBtn" style="width:100%;justify-content:center;padding:12px;" onclick="doLogin()">
+      <i class="fa-solid fa-right-to-bracket"></i> Login
+    </button>
+    <div style="text-align:center;margin-top:16px;font-size:.85rem;color:var(--muted);">
+      Don't have an account? <a href="#" onclick="showPage('registerPage')" style="color:var(--primary);font-weight:600;">Register here</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════ REGISTER ═══════════════ -->
+<div id="registerPage" class="page" style="background:var(--bg);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:20px;padding:36px;width:100%;max-width:520px;box-shadow:0 20px 60px #00000022;">
+    <div style="text-align:center;margin-bottom:22px;">
+      <div style="font-size:1.3rem;font-weight:800;color:var(--primary);">Create Account</div>
+      <div style="font-size:.85rem;color:var(--muted);">Register as student — await admin approval</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Full Name *</label><input class="form-control" id="regName" placeholder="Your full name"></div>
+      <div class="form-group"><label class="form-label">Enrollment No. *</label><input class="form-control" id="regEnroll" placeholder="e.g. 2300123456"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Email *</label><input class="form-control" id="regEmail" type="email" placeholder="your@email.com"></div>
+      <div class="form-group"><label class="form-label">Department</label>
+        <select class="form-control form-select" id="regDept">
+          <option>B.Tech CSE</option><option>B.Tech ECE</option><option>B.Tech ME</option>
+          <option>BCA</option><option>MCA</option><option>MBA</option><option>B.Pharma</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Password *</label><input class="form-control" id="regPass" type="password" placeholder="Min 6 chars"></div>
+      <div class="form-group"><label class="form-label">Confirm Password *</label><input class="form-control" id="regPass2" type="password" placeholder="Repeat password"></div>
+    </div>
+    <button class="btn btn-accent" style="width:100%;justify-content:center;padding:11px;" id="regBtn" onclick="doRegister()">
+      <i class="fa-solid fa-user-plus"></i> Register
+    </button>
+    <div style="text-align:center;margin-top:12px;font-size:.85rem;color:var(--muted);">
+      Already registered? <a href="#" onclick="showPage('loginPage')" style="color:var(--primary);font-weight:600;">Login</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ ADMIN PAGE ═══════════════ -->
+<div id="adminPage" class="page">
+  <div class="navbar">
+    <div class="brand"><i class="fa-solid fa-shield-halved"></i> Smart Attendance <span>ADMIN</span></div>
+    <div class="navbar-right">
+      <div class="user-chip">
+        <div class="av" id="adminAv">A</div>
+        <span id="adminNameNav">Admin</span>
+        <i class="fa-solid fa-chevron-down" style="font-size:.7rem;margin-left:4px;"></i>
+        <div class="ddmenu">
+          <a href="#" onclick="adminNav('profile')"><i class="fa-solid fa-user fa-fw"></i> My Profile</a>
+          <a href="#" onclick="adminNav('settings')"><i class="fa-solid fa-gear fa-fw"></i> Settings</a>
+          <a href="#" class="danger" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket fa-fw"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="app-shell">
+    <div class="sidebar">
+      <div class="user-info">
+        <div class="name" id="adminSidebarName">System Admin</div>
+        <div class="role-badge">Administrator</div>
+      </div>
+      <nav>
+        <div class="nav-section">Main</div>
+        <a href="#" onclick="adminNav('dashboard')" id="anav-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <a href="#" onclick="adminNav('users')" id="anav-users"><i class="fa-solid fa-users"></i> User Management</a>
+        <a href="#" onclick="adminNav('pending')" id="anav-pending"><i class="fa-solid fa-clock"></i> Pending Approvals <span id="pendingBadge" style="background:var(--accent2);color:#fff;font-size:.7rem;padding:1px 7px;border-radius:10px;margin-left:auto;display:none;"></span></a>
+        <a href="#" onclick="adminNav('courses')" id="anav-courses"><i class="fa-solid fa-book"></i> Courses</a>
+        <a href="#" onclick="adminNav('sessions')" id="anav-sessions"><i class="fa-solid fa-calendar-check"></i> All Sessions</a>
+        <div class="nav-section">Reports</div>
+        <a href="#" onclick="adminNav('reports')" id="anav-reports"><i class="fa-solid fa-chart-bar"></i> Attendance Reports</a>
+        <div class="nav-section">System</div>
+        <a href="#" onclick="adminNav('settings')" id="anav-settings"><i class="fa-solid fa-gear"></i> Settings</a>
+        <a href="#" onclick="adminNav('profile')" id="anav-profile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
+      </nav>
+    </div>
+    <div class="main-content" id="adminContent"><div class="empty-state"><div class="big-spinner" style="margin:0 auto;"></div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ FACULTY PAGE ═══════════════ -->
+<div id="facultyPage" class="page">
+  <div class="navbar">
+    <div class="brand"><i class="fa-solid fa-chalkboard-user"></i> Smart Attendance <span>FACULTY</span></div>
+    <div class="navbar-right">
+      <div class="user-chip">
+        <div class="av" id="facAv">F</div>
+        <span id="facNameNav">Faculty</span>
+        <i class="fa-solid fa-chevron-down" style="font-size:.7rem;margin-left:4px;"></i>
+        <div class="ddmenu">
+          <a href="#" onclick="facNav('profile')"><i class="fa-solid fa-user fa-fw"></i> My Profile</a>
+          <a href="#" class="danger" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket fa-fw"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="app-shell">
+    <div class="sidebar">
+      <div class="user-info">
+        <div class="name" id="facSidebarName">Faculty</div>
+        <div class="role-badge">Faculty Member</div>
+        <div style="font-size:.75rem;color:#ffffffaa;margin-top:4px;" id="facSidebarId"></div>
+      </div>
+      <nav>
+        <div class="nav-section">Main</div>
+        <a href="#" onclick="facNav('dashboard')" id="fnav-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <a href="#" onclick="facNav('sessions')" id="fnav-sessions"><i class="fa-solid fa-calendar-plus"></i> My Sessions</a>
+        <a href="#" onclick="facNav('qr')" id="fnav-qr"><i class="fa-solid fa-qrcode"></i> Live QR Code</a>
+        <a href="#" onclick="facNav('attendance')" id="fnav-attendance"><i class="fa-solid fa-clipboard-list"></i> Attendance Sheet</a>
+        <div class="nav-section">Account</div>
+        <a href="#" onclick="facNav('profile')" id="fnav-profile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
+      </nav>
+    </div>
+    <div class="main-content" id="facContent"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ STUDENT PAGE ═══════════════ -->
+<div id="studentPage" class="page">
+  <div class="navbar">
+    <div class="brand"><i class="fa-solid fa-graduation-cap"></i> Smart Attendance <span>STUDENT</span></div>
+    <div class="navbar-right">
+      <button class="nav-btn" onclick="stuNav('scan')"><i class="fa-solid fa-qrcode"></i> Scan QR</button>
+      <div class="user-chip">
+        <div class="av" id="stuAv">S</div>
+        <span id="stuNameNav">Student</span>
+        <i class="fa-solid fa-chevron-down" style="font-size:.7rem;margin-left:4px;"></i>
+        <div class="ddmenu">
+          <a href="#" onclick="stuNav('profile')"><i class="fa-solid fa-user fa-fw"></i> My Profile</a>
+          <a href="#" class="danger" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket fa-fw"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="app-shell">
+    <div class="sidebar">
+      <div class="user-info">
+        <div class="name" id="stuSidebarName">Student</div>
+        <div class="role-badge">Student</div>
+        <div style="font-size:.75rem;color:#ffffffaa;margin-top:4px;" id="stuSidebarId"></div>
+      </div>
+      <nav>
+        <div class="nav-section">Main</div>
+        <a href="#" onclick="stuNav('dashboard')" id="snav-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <a href="#" onclick="stuNav('scan')" id="snav-scan"><i class="fa-solid fa-qrcode"></i> Mark Attendance</a>
+        <a href="#" onclick="stuNav('history')" id="snav-history"><i class="fa-solid fa-history"></i> Attendance History</a>
+        <div class="nav-section">Account</div>
+        <a href="#" onclick="stuNav('profile')" id="snav-profile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
+      </nav>
+    </div>
+    <div class="main-content" id="stuContent"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+<div class="modal-overlay" id="addUserModal">
+  <div class="modal-box">
+    <h3><i class="fa-solid fa-user-plus" style="color:var(--accent);"></i> Add New User</h3>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Full Name *</label><input class="form-control" id="mu_name" placeholder="Full name"></div>
+      <div class="form-group"><label class="form-label">Institution ID *</label><input class="form-control" id="mu_id" placeholder="e.g. STU006 or FAC003"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Email *</label><input class="form-control" id="mu_email" type="email" placeholder="email@tmu.ac.in"></div>
+      <div class="form-group"><label class="form-label">Role *</label>
+        <select class="form-control form-select" id="mu_role">
+          <option value="student">Student</option>
+          <option value="faculty">Faculty</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Department</label>
+        <select class="form-control form-select" id="mu_dept">
+          <option>B.Tech CSE</option><option>B.Tech ECE</option><option>B.Tech ME</option>
+          <option>BCA</option><option>MCA</option><option>MBA</option><option>B.Pharma</option><option>Administration</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Password *</label><input class="form-control" id="mu_pass" type="password" placeholder="Min 6 chars"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('addUserModal')">Cancel</button>
+      <button class="btn btn-accent" id="saveUserBtn" onclick="saveNewUser()"><i class="fa-solid fa-save"></i> Save to Database</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addCourseModal">
+  <div class="modal-box">
+    <h3><i class="fa-solid fa-book" style="color:var(--accent);"></i> Add Course</h3>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Course Code *</label><input class="form-control" id="mc_code" placeholder="e.g. CS304"></div>
+      <div class="form-group"><label class="form-label">Course Name *</label><input class="form-control" id="mc_name" placeholder="Algorithms"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Department</label>
+        <select class="form-control form-select" id="mc_dept"><option>B.Tech CSE</option><option>B.Tech ECE</option><option>BCA</option><option>MCA</option><option>MBA</option><option>B.Pharma</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Credits</label><input class="form-control" id="mc_credits" type="number" value="3" min="1" max="6"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('addCourseModal')">Cancel</button>
+      <button class="btn btn-accent" onclick="saveNewCourse()"><i class="fa-solid fa-save"></i> Save Course</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="createSessionModal">
+  <div class="modal-box">
+    <h3><i class="fa-solid fa-calendar-plus" style="color:var(--accent);"></i> Create Session</h3>
+    <div class="form-group"><label class="form-label">Course *</label><select class="form-control form-select" id="ms_course"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Session Title</label><input class="form-control" id="ms_title" placeholder="e.g. Lecture 5"></div>
+      <div class="form-group"><label class="form-label">Location / Room</label><input class="form-control" id="ms_location" placeholder="Room 301"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date & Time *</label><input class="form-control" id="ms_datetime" type="datetime-local"></div>
+      <div class="form-group"><label class="form-label">Late Grace (minutes)</label><input class="form-control" id="ms_grace" type="number" value="15" min="0" max="60"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('createSessionModal')">Cancel</button>
+      <button class="btn btn-accent" id="saveSessionBtn" onclick="saveNewSession()"><i class="fa-solid fa-save"></i> Create Session</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════ API CONFIG ═══════════════════════════ */
+const API = (() => {
+  // Always use same origin — works locally AND on Render automatically
+  const base = `${window.location.protocol}//${window.location.host}/api`;
+
+  const token = () => localStorage.getItem('sas_token');
+
+  const headers = (json = true) => {
+    const h = {};
+    if (json) h['Content-Type'] = 'application/json';
+    const t = token();
+    if (t) h['Authorization'] = `Bearer ${t}`;
+    return h;
+  };
+
+  const handle = async (res) => {
+    if (res.status === 204) return null;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+    return data;
+  };
+
+  return {
+    get:    (path)         => fetch(`${base}${path}`, { headers: headers() }).then(handle),
+    post:   (path, body)   => fetch(`${base}${path}`, { method:'POST',   headers: headers(), body: JSON.stringify(body) }).then(handle),
+    patch:  (path, body)   => fetch(`${base}${path}`, { method:'PATCH',  headers: headers(), body: JSON.stringify(body) }).then(handle),
+    delete: (path)         => fetch(`${base}${path}`, { method:'DELETE', headers: headers() }).then(handle),
+  };
+})();
+
+/* ═══════════════════════════ STATE ═══════════════════════════ */
+let currentUser = null;
+let loginRole   = 'student';
+let qrInterval  = null;
+let camStream   = null;
+let scanState   = {};
+let cachedCourses = [];
+let cachedSettings = {};
+
+/* ═══════════════════════════ UTILS ═══════════════════════════ */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function openModal(id)  { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function toast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  const d = document.createElement('div');
+  d.className = `toast-item ${type}`;
+  const icons = { success:'circle-check', error:'circle-xmark', warning:'triangle-exclamation', info:'circle-info' };
+  d.innerHTML = `<i class="fa-solid fa-${icons[type]||'circle-info'}"></i> ${msg}`;
+  t.appendChild(d);
+  setTimeout(() => { d.style.opacity='0'; d.style.transition='opacity .3s'; setTimeout(()=>d.remove(),300); }, 3500);
+}
+
+function loading(show, msg = 'Loading...') {
+  const el = document.getElementById('loadingOverlay');
+  el.style.display = show ? 'flex' : 'none';
+  document.getElementById('loadingMsg').textContent = msg;
+}
+
+function fmt(iso)   { return new Date(iso).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}); }
+function fmtDT(iso) { return new Date(iso).toLocaleString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function pct(n, d)  { return d ? Math.round((n/d)*100) : 0; }
+
+function pctBar(p) {
+  const cls = p>=75?'':''+( p>=50?'warn':'danger');
+  return `<div class="pct-bar"><div class="pct-bar-fill ${cls}" style="width:${p}%"></div></div><small style="color:var(--muted);font-size:.75rem;">${p}%</small>`;
+}
+
+function setNavActive(prefix, section) {
+  document.querySelectorAll(`[id^="${prefix}nav-"]`).forEach(a => a.classList.remove('active'));
+  const el = document.getElementById(`${prefix}nav-${section}`);
+  if (el) el.classList.add('active');
+}
+
+/* ═══════════════════════════ AUTH ═══════════════════════════ */
+function setLoginRole(r) {
+  loginRole = r;
+  document.querySelectorAll('.login-tab').forEach((t,i) => t.classList.toggle('active', ['student','faculty','admin'][i]===r));
+  document.getElementById('loginIdLabel').textContent = r==='student'?'Enrollment No.':r==='faculty'?'Faculty ID':'Admin ID';
+}
+
+async function doLogin() {
+  const id   = document.getElementById('loginId').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  if (!id || !pass) { toast('Please enter ID and password','warning'); return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Logging in...';
+  try {
+    const data = await API.post('/auth/login', { credential: id, password: pass });
+    // Role check
+    if (data.user.role !== loginRole) {
+      toast(`This ID belongs to a ${data.user.role}, not a ${loginRole}. Please select the correct role tab.`, 'error');
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
+      return;
+    }
+    localStorage.setItem('sas_token', data.access_token);
+    localStorage.setItem('sas_user',  JSON.stringify(data.user));
+    currentUser = data.user;
+    toast(`Welcome, ${data.user.full_name.split(' ')[0]}!`, 'success');
+    routeUser(currentUser);
+  } catch (e) {
+    toast(e.message || 'Login failed', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
+  }
+}
+
+function routeUser(user) {
+  if (user.role === 'admin')   { showPage('adminPage');   initAdmin(); }
+  else if (user.role==='faculty') { showPage('facultyPage'); initFaculty(); }
+  else                         { showPage('studentPage'); initStudent(); }
+}
+
+async function doRegister() {
+  const name   = document.getElementById('regName').value.trim();
+  const enroll = document.getElementById('regEnroll').value.trim();
+  const email  = document.getElementById('regEmail').value.trim();
+  const dept   = document.getElementById('regDept').value;
+  const pass   = document.getElementById('regPass').value;
+  const pass2  = document.getElementById('regPass2').value;
+  if (!name||!enroll||!email||!pass) { toast('All fields required','warning'); return; }
+  if (pass !== pass2)                { toast('Passwords do not match','error'); return; }
+  if (pass.length < 6)               { toast('Password min 6 characters','warning'); return; }
+  const btn = document.getElementById('regBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Registering...';
+  try {
+    await API.post('/auth/register', { full_name:name, inst_id:enroll, email, password:pass, department:dept, role:'student' });
+    toast('Registered! Your account is pending admin approval.','success');
+    showPage('loginPage');
+  } catch(e) {
+    toast(e.message||'Registration failed','error');
+  } finally {
+    btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-user-plus"></i> Register';
+  }
+}
+
+function doLogout() {
+  if (qrInterval)    { clearInterval(qrInterval); qrInterval = null; }
+  if (camStream)     { camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+  if (qrScanInterval){ clearInterval(qrScanInterval); qrScanInterval = null; }
+  if (qrScanStream)  { qrScanStream.getTracks().forEach(t=>t.stop()); qrScanStream = null; }
+  localStorage.removeItem('sas_token');
+  localStorage.removeItem('sas_user');
+  currentUser = null;
+  document.getElementById('loginId').value  = '';
+  document.getElementById('loginPass').value= '';
+  showPage('loginPage');
+  toast('Logged out successfully');
+}
+
+/* ═══════════════════════════ ADMIN ═══════════════════════════ */
+function initAdmin() {
+  const u = currentUser;
+  document.getElementById('adminNameNav').textContent    = u.full_name.split(' ')[0];
+  document.getElementById('adminAv').textContent         = u.full_name[0];
+  document.getElementById('adminSidebarName').textContent= u.full_name;
+  adminNav('dashboard');
+}
+
+async function adminNav(section) {
+  setNavActive('a', section);
+  const c = document.getElementById('adminContent');
+  c.innerHTML = `<div class="empty-state"><div class="big-spinner" style="margin:0 auto;width:40px;height:40px;border-width:3px;"></div></div>`;
+  const renders = {
+    dashboard: renderAdminDashboard,
+    users:     renderUserMgmt,
+    pending:   renderPending,
+    courses:   renderCourses,
+    sessions:  renderAllSessions,
+    reports:   renderReports,
+    settings:  renderSettingsPage,
+    profile:   (c) => renderProfile(c, currentUser),
+  };
+  if (renders[section]) await renders[section](c);
+}
+
+async function renderAdminDashboard(c) {
+  const [users, sessions, courses] = await Promise.all([
+    API.get('/users?limit=500').catch(()=>({total:0,users:[]})),
+    API.get('/sessions?limit=500').catch(()=>({total:0,sessions:[]})),
+    API.get('/courses').catch(()=>[]),
+  ]);
+  cachedCourses = Array.isArray(courses) ? courses : [];
+  const allUsers    = users.users||[];
+  const allSessions = sessions.sessions||[];
+  const students  = allUsers.filter(u=>u.role==='student');
+  const faculty   = allUsers.filter(u=>u.role==='faculty');
+  const pending   = allUsers.filter(u=>u.status==='pending');
+  const active    = allSessions.filter(s=>s.status==='active');
+
+  // Update pending badge
+  const pb = document.getElementById('pendingBadge');
+  pb.textContent = pending.length; pb.style.display = pending.length ? 'inline':'none';
+
+  c.innerHTML = `
+    <div class="page-header">
+      <h2><i class="fa-solid fa-gauge" style="color:var(--accent);"></i> Admin Dashboard</h2>
+      <div style="color:var(--muted);font-size:.85rem;">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}</div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-icon" style="background:#dbeafe;"><i class="fa-solid fa-users" style="color:#1e40af;"></i></div><div><div class="stat-val">${students.length}</div><div class="stat-lbl">Total Students</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#d1fae5;"><i class="fa-solid fa-chalkboard-user" style="color:#065f46;"></i></div><div><div class="stat-val">${faculty.length}</div><div class="stat-lbl">Faculty Members</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fef3c7;"><i class="fa-solid fa-clock" style="color:#92400e;"></i></div><div><div class="stat-val">${pending.length}</div><div class="stat-lbl">Pending Approvals</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#ede9fe;"><i class="fa-solid fa-calendar-check" style="color:#5b21b6;"></i></div><div><div class="stat-val">${active.length}</div><div class="stat-lbl">Active Sessions</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4;"><i class="fa-solid fa-book" style="color:#166534;"></i></div><div><div class="stat-val">${cachedCourses.length}</div><div class="stat-lbl">Courses</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fff7ed;"><i class="fa-solid fa-calendar-alt" style="color:#c2410c;"></i></div><div><div class="stat-val">${allSessions.length}</div><div class="stat-lbl">Total Sessions</div></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+      <div class="card">
+        <div class="section-title"><i class="fa-solid fa-clock" style="color:var(--accent);"></i> Pending Approvals</div>
+        ${pending.length===0 ? '<div class="empty-state" style="padding:20px;"><i class="fa-solid fa-check-circle" style="font-size:1.5rem;color:var(--success);"></i><p>All clear!</p></div>' :
+          `<p style="color:var(--muted);font-size:.88rem;margin-bottom:12px;">${pending.length} student(s) awaiting approval</p>
+           <button class="btn btn-accent" onclick="adminNav('pending')"><i class="fa-solid fa-arrow-right"></i> Review Now</button>`}
+      </div>
+      <div class="card">
+        <div class="section-title"><i class="fa-solid fa-broadcast-tower" style="color:var(--success);"></i> Active Sessions</div>
+        ${active.length===0 ? '<div class="empty-state" style="padding:20px;"><i class="fa-solid fa-calendar-xmark" style="font-size:1.5rem;"></i><p>No active sessions</p></div>' :
+          active.slice(0,3).map(s=>{
+            const co = cachedCourses.find(x=>x.id===s.course_id);
+            return `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
+              <div style="font-weight:600;">${s.title} — ${co?.name||'?'}</div>
+              <div style="font-size:.8rem;color:var(--muted);">${s.location||'No location'} · <span class="badge bg-green">Live</span></div>
+            </div>`;
+          }).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-users"></i> Recently Added Users</div>
+      <table class="tbl">
+        <thead><tr><th>Name</th><th>ID</th><th>Role</th><th>Department</th><th>Status</th></tr></thead>
+        <tbody>
+          ${[...allUsers].slice(0,6).map(u=>`<tr>
+            <td><strong>${u.full_name}</strong></td>
+            <td><code>${u.inst_id}</code></td>
+            <td><span class="badge ${u.role==='admin'?'bg-red':u.role==='faculty'?'bg-blue':'bg-gray'}">${u.role}</span></td>
+            <td>${u.department||'-'}</td>
+            <td><span class="badge ${u.status==='active'?'bg-green':u.status==='pending'?'bg-orange':'bg-red'}">${u.status}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function renderUserMgmt(c) {
+  c.innerHTML = `
+    <div class="page-header">
+      <h2><i class="fa-solid fa-users" style="color:var(--accent);"></i> User Management</h2>
+      <button class="btn btn-accent" onclick="openModal('addUserModal')"><i class="fa-solid fa-user-plus"></i> Add User</button>
+    </div>
+    <div class="card">
+      <div class="search-bar">
+        <input class="form-control" id="userSearch" placeholder="Search by name, ID, email..." style="max-width:280px;" oninput="filterUsersTable()">
+        <select class="form-control form-select" id="roleFilter" onchange="filterUsersTable()" style="max-width:140px;">
+          <option value="">All Roles</option><option value="student">Students</option><option value="faculty">Faculty</option><option value="admin">Admins</option>
+        </select>
+        <select class="form-control form-select" id="statusFilter" onchange="filterUsersTable()" style="max-width:140px;">
+          <option value="">All Status</option><option value="active">Active</option><option value="pending">Pending</option><option value="inactive">Inactive</option>
+        </select>
+      </div>
+      <div id="usersTableBody"><div class="empty-state"><div class="big-spinner" style="margin:0 auto;width:30px;height:30px;border-width:3px;"></div></div></div>
+    </div>`;
+  await loadUsersTable();
+}
+
+let allUsersCache = [];
+async function loadUsersTable() {
+  try {
+    const data = await API.get('/users?limit=500');
+    allUsersCache = data.users||[];
+    filterUsersTable();
+  } catch(e) {
+    document.getElementById('usersTableBody').innerHTML = `<div class="alert alert-warning">Failed to load users: ${e.message}</div>`;
+  }
+}
+
+function filterUsersTable() {
+  const search = (document.getElementById('userSearch')?.value||'').toLowerCase();
+  const role   = document.getElementById('roleFilter')?.value||'';
+  const status = document.getElementById('statusFilter')?.value||'';
+  let list = allUsersCache;
+  if (search) list = list.filter(u => `${u.full_name} ${u.inst_id} ${u.email}`.toLowerCase().includes(search));
+  if (role)   list = list.filter(u => u.role   === role);
+  if (status) list = list.filter(u => u.status === status);
+  const wrap = document.getElementById('usersTableBody');
+  if (!wrap) return;
+  if (!list.length) { wrap.innerHTML = '<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>No users found</p></div>'; return; }
+  wrap.innerHTML = `<table class="tbl">
+    <thead><tr><th>#</th><th>Name</th><th>ID</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>${list.map(u=>`<tr>
+      <td>${u.id}</td>
+      <td><strong>${u.full_name}</strong><br><small style="color:var(--muted);">${u.email}</small></td>
+      <td><code>${u.inst_id}</code></td>
+      <td><span class="badge ${u.role==='admin'?'bg-red':u.role==='faculty'?'bg-blue':'bg-gray'}">${u.role}</span></td>
+      <td>${u.department||'-'}</td>
+      <td><span class="badge ${u.status==='active'?'bg-green':u.status==='pending'?'bg-orange':'bg-red'}">${u.status}</span></td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${u.status==='pending'?`<button class="btn btn-success btn-sm" onclick="approveUser(${u.id})"><i class="fa-solid fa-check"></i> Approve</button>`:''}
+        ${u.status==='active'?`<button class="btn btn-outline btn-sm" onclick="setUserStatus(${u.id},'inactive')"><i class="fa-solid fa-ban"></i></button>`:''}
+        ${u.status==='inactive'?`<button class="btn btn-success btn-sm" onclick="setUserStatus(${u.id},'active')"><i class="fa-solid fa-check"></i></button>`:''}
+        ${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id},'${u.full_name}')"><i class="fa-solid fa-trash"></i></button>`:''}
+      </td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+async function approveUser(id) {
+  try {
+    await API.patch(`/users/${id}/status`, { status: 'active' });
+    toast('User approved!','success');
+    await loadUsersTable();
+    updatePendingBadge();
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function setUserStatus(id, status) {
+  try {
+    await API.patch(`/users/${id}/status`, { status });
+    toast(`Status updated to ${status}`);
+    await loadUsersTable();
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
+  try {
+    await API.delete(`/users/${id}`);
+    toast('User deleted','warning');
+    await loadUsersTable();
+    updatePendingBadge();
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function saveNewUser() {
+  const name  = document.getElementById('mu_name').value.trim();
+  const id    = document.getElementById('mu_id').value.trim();
+  const email = document.getElementById('mu_email').value.trim();
+  const role  = document.getElementById('mu_role').value;
+  const dept  = document.getElementById('mu_dept').value;
+  const pass  = document.getElementById('mu_pass').value;
+  if (!name||!id||!email||!pass) { toast('All required fields must be filled','warning'); return; }
+  if (pass.length < 6) { toast('Password min 6 characters','warning'); return; }
+  const btn = document.getElementById('saveUserBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Saving...';
+  try {
+    const newUser = await API.post('/users', { full_name:name, inst_id:id, email, role, department:dept, password:pass });
+    closeModal('addUserModal');
+    toast(`✅ ${role} "${newUser.full_name}" saved to database! They can login with ID: ${id}`, 'success');
+    ['mu_name','mu_id','mu_email','mu_pass'].forEach(x=>document.getElementById(x).value='');
+    await loadUsersTable();
+    updatePendingBadge();
+  } catch(e) {
+    toast(e.message||'Failed to save user','error');
+  } finally {
+    btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-save"></i> Save to Database';
+  }
+}
+
+async function updatePendingBadge() {
+  try {
+    const data = await API.get('/users?status=pending&limit=500');
+    const cnt = (data.users||[]).length;
+    const pb = document.getElementById('pendingBadge');
+    if (pb) { pb.textContent=cnt; pb.style.display=cnt?'inline':'none'; }
+  } catch {}
+}
+
+async function renderPending(c) {
+  const data = await API.get('/users?status=pending&limit=500').catch(()=>({users:[]}));
+  const pending = data.users||[];
+  c.innerHTML = `
+    <div class="page-header">
+      <h2><i class="fa-solid fa-clock" style="color:var(--accent);"></i> Pending Approvals</h2>
+      ${pending.length?`<button class="btn btn-success" onclick="approveAll()"><i class="fa-solid fa-check-double"></i> Approve All</button>`:''}
+    </div>
+    <div class="card">
+      ${!pending.length ? '<div class="empty-state"><i class="fa-solid fa-check-circle" style="color:var(--success);"></i><p>No pending approvals — all clear!</p></div>' :
+        `<table class="tbl">
+          <thead><tr><th>Name</th><th>Enrollment No.</th><th>Email</th><th>Department</th><th>Registered</th><th>Actions</th></tr></thead>
+          <tbody>${pending.map(u=>`<tr>
+            <td><strong>${u.full_name}</strong></td>
+            <td><code>${u.inst_id}</code></td>
+            <td>${u.email}</td>
+            <td>${u.department||'-'}</td>
+            <td>${fmt(u.created_at)}</td>
+            <td style="display:flex;gap:6px;">
+              <button class="btn btn-success btn-sm" onclick="approveAndRefresh(${u.id})"><i class="fa-solid fa-check"></i> Approve</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteAndRefresh(${u.id},'${u.full_name}')"><i class="fa-solid fa-times"></i> Reject</button>
+            </td>
+          </tr>`).join('')}</tbody>
+        </table>`}
+    </div>`;
+}
+
+async function approveAndRefresh(id) {
+  await approveUser(id);
+  await renderPending(document.getElementById('adminContent'));
+}
+async function deleteAndRefresh(id, name) {
+  await deleteUser(id, name);
+  await renderPending(document.getElementById('adminContent'));
+}
+async function approveAll() {
+  const data = await API.get('/users?status=pending&limit=500').catch(()=>({users:[]}));
+  const pending = data.users||[];
+  await Promise.all(pending.map(u => API.patch(`/users/${u.id}/status`,{status:'active'}).catch(()=>{})));
+  toast(`${pending.length} users approved!`,'success');
+  updatePendingBadge();
+  await renderPending(document.getElementById('adminContent'));
+}
+
+async function renderCourses(c) {
+  const courses = await API.get('/courses').catch(()=>[]);
+  cachedCourses = Array.isArray(courses)?courses:[];
+  c.innerHTML = `
+    <div class="page-header">
+      <h2><i class="fa-solid fa-book" style="color:var(--accent);"></i> Courses</h2>
+      <button class="btn btn-accent" onclick="openModal('addCourseModal')"><i class="fa-solid fa-plus"></i> Add Course</button>
+    </div>
+    <div class="card">
+      ${!cachedCourses.length ? '<div class="empty-state"><i class="fa-solid fa-book-open"></i><p>No courses yet</p></div>' :
+        `<table class="tbl">
+          <thead><tr><th>Code</th><th>Course Name</th><th>Department</th><th>Credits</th><th>Actions</th></tr></thead>
+          <tbody>${cachedCourses.map(co=>`<tr>
+            <td><code>${co.code}</code></td>
+            <td><strong>${co.name}</strong></td>
+            <td>${co.department||'-'}</td>
+            <td>${co.credits}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteCourse(${co.id},'${co.name}')"><i class="fa-solid fa-trash"></i></button></td>
+          </tr>`).join('')}</tbody>
+        </table>`}
+    </div>`;
+}
+
+async function saveNewCourse() {
+  const code    = document.getElementById('mc_code').value.trim().toUpperCase();
+  const name    = document.getElementById('mc_name').value.trim();
+  const dept    = document.getElementById('mc_dept').value;
+  const credits = parseInt(document.getElementById('mc_credits').value)||3;
+  if (!code||!name) { toast('Code and name are required','warning'); return; }
+  try {
+    await API.post('/courses', { code, name, department:dept, credits });
+    closeModal('addCourseModal');
+    toast(`Course "${name}" added!`,'success');
+    await renderCourses(document.getElementById('adminContent'));
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function deleteCourse(id, name) {
+  if (!confirm(`Delete course "${name}"?`)) return;
+  try {
+    await API.delete(`/courses/${id}`);
+    toast('Course deleted','warning');
+    await renderCourses(document.getElementById('adminContent'));
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function renderAllSessions(c) {
+  const [sessions, courses, users] = await Promise.all([
+    API.get('/sessions?limit=200').catch(()=>({sessions:[]})),
+    API.get('/courses').catch(()=>[]),
+    API.get('/users?limit=500').catch(()=>({users:[]})),
+  ]);
+  const ss = sessions.sessions||[];
+  const cs = Array.isArray(courses)?courses:[];
+  const us = users.users||[];
+  c.innerHTML = `
+    <div class="page-header"><h2><i class="fa-solid fa-calendar-check" style="color:var(--accent);"></i> All Sessions</h2></div>
+    <div class="card">
+      ${!ss.length ? '<div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i><p>No sessions yet</p></div>' :
+        `<table class="tbl">
+          <thead><tr><th>Title</th><th>Course</th><th>Faculty</th><th>Location</th><th>Scheduled</th><th>Status</th></tr></thead>
+          <tbody>${ss.map(s=>{
+            const co = cs.find(x=>x.id===s.course_id);
+            const fac = us.find(x=>x.id===s.faculty_id);
+            return `<tr>
+              <td><strong>${s.title}</strong></td>
+              <td>${co?.name||'?'} <small style="color:var(--muted);">(${co?.code||''})</small></td>
+              <td>${fac?.full_name||'?'}</td>
+              <td>${s.location||'-'}</td>
+              <td>${fmtDT(s.scheduled_at)}</td>
+              <td><span class="badge ${s.status==='active'?'bg-green':s.status==='closed'?'bg-gray':'bg-orange'}">${s.status}</span></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`}
+    </div>`;
+}
+
+async function renderReports(c) {
+  const [users, sessions] = await Promise.all([
+    API.get('/users?role=student&limit=500').catch(()=>({users:[]})),
+    API.get('/sessions?limit=200').catch(()=>({sessions:[]})),
+  ]);
+  const students = users.users||[];
+  const closed   = (sessions.sessions||[]).filter(s=>s.status==='closed');
+  c.innerHTML = `
+    <div class="page-header"><h2><i class="fa-solid fa-chart-bar" style="color:var(--accent);"></i> Attendance Reports</h2></div>
+    <div class="card">
+      <div class="section-title">Student-wise Attendance (${closed.length} closed sessions)</div>
+      ${!students.length ? '<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>No students</p></div>' :
+        `<table class="tbl">
+          <thead><tr><th>Student</th><th>Enrollment No.</th><th>Department</th><th>Attendance %</th></tr></thead>
+          <tbody id="reportTbody"><tr><td colspan="4" style="text-align:center;color:var(--muted);">Loading attendance data...</td></tr></tbody>
+        </table>`}
+    </div>`;
+  if (students.length) {
+    const tbody = document.getElementById('reportTbody');
+    const rows = await Promise.all(students.map(async stu => {
+      try {
+        const att = await API.get(`/attendance/student/${stu.id}?limit=500`);
+        const present = (att.records||[]).filter(a=>a.status==='present').length;
+        const p = pct(present, closed.length);
+        return `<tr>
+          <td><strong>${stu.full_name}</strong></td>
+          <td><code>${stu.inst_id}</code></td>
+          <td>${stu.department||'-'}</td>
+          <td style="min-width:160px;">${pctBar(p)}</td>
+        </tr>`;
+      } catch { return `<tr><td><strong>${stu.full_name}</strong></td><td><code>${stu.inst_id}</code></td><td>${stu.department||'-'}</td><td>N/A</td></tr>`; }
+    }));
+    if (tbody) tbody.innerHTML = rows.join('');
+  }
+}
+
+async function renderSettingsPage(c) {
+  const s = await API.get('/settings').catch(()=>({gps_range:10,face_required:true,qr_expiry:45,inst_name:'TMU'}));
+  cachedSettings = s;
+  c.innerHTML = `
+    <div class="page-header"><h2><i class="fa-solid fa-gear" style="color:var(--accent);"></i> System Settings</h2></div>
+    <div class="card" style="max-width:600px;">
+      <div class="form-group"><label class="form-label">Institution Name</label><input class="form-control" id="set_inst" value="${s.inst_name||'TMU'}"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-location-dot"></i> GPS Range (meters)</label>
+          <input class="form-control" id="set_gps" type="number" value="${s.gps_range||10}" min="5" max="500">
+          <small style="color:var(--muted);">Students must be within this range</small>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-qrcode"></i> QR Refresh Time (seconds)</label>
+          <input class="form-control" id="set_qr" type="number" value="${s.qr_expiry||45}" min="10" max="300">
+          <small style="color:var(--muted);">How often QR code refreshes (default: 45s)</small>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fa-solid fa-face-smile"></i> Face Verification Required?</label>
+        <select class="form-control form-select" id="set_face">
+          <option value="true" ${s.face_required?'selected':''}>Yes — 75% of students must scan face</option>
+          <option value="false" ${!s.face_required?'selected':''}>No — QR + GPS only</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()"><i class="fa-solid fa-save"></i> Save Settings</button>
+    </div>`;
+}
+
+async function saveSettings() {
+  try {
+    await API.patch('/settings', {
+      gps_range:     parseInt(document.getElementById('set_gps').value)||10,
+      qr_expiry:     parseInt(document.getElementById('set_qr').value)||45,
+      face_required: document.getElementById('set_face').value === 'true',
+      inst_name:     document.getElementById('set_inst').value||'TMU',
+    });
+    toast('Settings saved!','success');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+/* ═══════════════════════════ FACULTY ═══════════════════════════ */
+function initFaculty() {
+  const u = currentUser;
+  document.getElementById('facNameNav').textContent    = u.full_name.split(' ')[0];
+  document.getElementById('facAv').textContent         = u.full_name[0];
+  document.getElementById('facSidebarName').textContent= u.full_name;
+  document.getElementById('facSidebarId').textContent  = 'ID: ' + u.inst_id;
+  facNav('dashboard');
+}
+
+async function facNav(section) {
+  setNavActive('f', section);
+  const c = document.getElementById('facContent');
+  c.innerHTML = `<div class="empty-state"><div class="big-spinner" style="margin:0 auto;width:40px;height:40px;border-width:3px;"></div></div>`;
+  const renders = {
+    dashboard:  renderFacDashboard,
+    sessions:   renderFacSessions,
+    qr:         renderFacQR,
+    attendance: renderFacAttendance,
+    profile:    (c) => renderProfile(c, currentUser),
+  };
+  if (renders[section]) await renders[section](c);
+}
+
+async function renderFacDashboard(c) {
+  const [sessions, courses] = await Promise.all([
+    API.get('/sessions').catch(()=>({sessions:[]})),
+    API.get('/courses').catch(()=>[]),
+  ]);
+  cachedCourses = Array.isArray(courses)?courses:[];
+  const ss     = sessions.sessions||[];
+  const active = ss.filter(s=>s.status==='active');
+  c.innerHTML = `
+    <div class="page-header">
+      <h2>Welcome, ${currentUser.full_name.split(' ')[0]} 👋</h2>
+      <button class="btn btn-accent" onclick="openCreateSession()"><i class="fa-solid fa-calendar-plus"></i> New Session</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-icon" style="background:#dbeafe;"><i class="fa-solid fa-calendar" style="color:#1e40af;"></i></div><div><div class="stat-val">${ss.length}</div><div class="stat-lbl">My Sessions</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#d1fae5;"><i class="fa-solid fa-broadcast-tower" style="color:#065f46;"></i></div><div><div class="stat-val">${active.length}</div><div class="stat-lbl">Active Now</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fef3c7;"><i class="fa-solid fa-book" style="color:#92400e;"></i></div><div><div class="stat-val">${cachedCourses.length}</div><div class="stat-lbl">Total Courses</div></div></div>
+    </div>
+    ${active.length ? `
+    <div class="card" style="border:2px solid var(--success);margin-bottom:20px;">
+      <div class="section-title" style="color:var(--success);"><i class="fa-solid fa-broadcast-tower"></i> Active Session — QR is Live</div>
+      ${active.map(s=>{
+        const co = cachedCourses.find(x=>x.id===s.course_id);
+        return `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div><div style="font-size:1.1rem;font-weight:700;">${s.title} — ${co?.name||'?'}</div>
+          <div style="color:var(--muted);font-size:.85rem;">${s.location||'No location'}</div></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary" onclick="facNav('qr')"><i class="fa-solid fa-qrcode"></i> Show QR</button>
+            <button class="btn btn-danger" onclick="endSessionFac(${s.id})"><i class="fa-solid fa-stop"></i> End</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-history"></i> Recent Sessions</div>
+      ${!ss.length ? '<div class="empty-state" style="padding:20px;"><i class="fa-solid fa-calendar-xmark"></i><p>No sessions yet. Create your first!</p></div>' :
+        ss.slice(0,5).map(s=>{
+          const co = cachedCourses.find(x=>x.id===s.course_id);
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);">
+            <div><div style="font-weight:600;">${s.title} — ${co?.name||'?'}</div>
+            <div style="font-size:.82rem;color:var(--muted);">${fmtDT(s.scheduled_at)} · ${s.location||'No location'}</div></div>
+            <span class="badge ${s.status==='active'?'bg-green':s.status==='closed'?'bg-gray':'bg-orange'}">${s.status}</span>
+          </div>`;
+        }).join('')}
+    </div>`;
+}
+
+async function renderFacSessions(c) {
+  const [sessions, courses] = await Promise.all([
+    API.get('/sessions').catch(()=>({sessions:[]})),
+    API.get('/courses').catch(()=>[]),
+  ]);
+  cachedCourses = Array.isArray(courses)?courses:[];
+  const ss = sessions.sessions||[];
+  c.innerHTML = `
+    <div class="page-header">
+      <h2><i class="fa-solid fa-calendar-check" style="color:var(--accent);"></i> My Sessions</h2>
+      <button class="btn btn-accent" onclick="openCreateSession()"><i class="fa-solid fa-plus"></i> New Session</button>
+    </div>
+    <div class="card">
+      ${!ss.length ? '<div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i><p>No sessions yet</p></div>' :
+        `<table class="tbl">
+          <thead><tr><th>Title</th><th>Course</th><th>Location</th><th>Scheduled</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>${ss.map(s=>{
+            const co = cachedCourses.find(x=>x.id===s.course_id);
+            return `<tr>
+              <td><strong>${s.title}</strong></td>
+              <td>${co?.name||'?'} <small style="color:var(--muted);">(${co?.code||''})</small></td>
+              <td>${s.location||'-'}</td>
+              <td>${fmtDT(s.scheduled_at)}</td>
+              <td><span class="badge ${s.status==='active'?'bg-green':s.status==='closed'?'bg-gray':'bg-orange'}">${s.status}</span></td>
+              <td style="display:flex;gap:6px;">
+                ${s.status==='scheduled'?`<button class="btn btn-success btn-sm" onclick="startSessionFac(${s.id})"><i class="fa-solid fa-play"></i> Start</button>`:''}
+                ${s.status==='active'?`<button class="btn btn-primary btn-sm" onclick="facNav('qr')"><i class="fa-solid fa-qrcode"></i> QR</button>
+                  <button class="btn btn-danger btn-sm" onclick="endSessionFac(${s.id})"><i class="fa-solid fa-stop"></i> End</button>`:''}
+              </td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`}
+    </div>`;
+}
+
+async function startSessionFac(id) {
+  try {
+    await API.post(`/sessions/${id}/start`);
+    toast('Session started! QR is now live','success');
+    facNav('qr');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function endSessionFac(id) {
+  if (!confirm('End this session? QR will stop working.')) return;
+  try {
+    await API.post(`/sessions/${id}/end`);
+    toast('Session ended','warning');
+    if (qrInterval) { clearInterval(qrInterval); qrInterval=null; }
+    facNav('sessions');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function renderFacQR(c) {
+  const sessions = await API.get('/sessions').catch(()=>({sessions:[]}));
+  const ss = sessions.sessions||[];
+  const active = ss.find(s=>s.status==='active');
+  const courses = await API.get('/courses').catch(()=>[]);
+  cachedCourses = Array.isArray(courses)?courses:[];
+  const settings = await API.get('/settings').catch(()=>({qr_expiry:45,gps_range:10}));
+  cachedSettings = settings;
+  if (!active) {
+    c.innerHTML = `
+      <div class="page-header"><h2><i class="fa-solid fa-qrcode" style="color:var(--accent);"></i> Generate QR Code</h2></div>
+      <div class="card" style="max-width:500px;text-align:center;">
+        <div class="empty-state"><i class="fa-solid fa-qrcode"></i><p>No active session. Start a session first.</p></div>
+        <button class="btn btn-accent" style="margin-top:12px;" onclick="openCreateSession()"><i class="fa-solid fa-plus"></i> Create Session</button>
+      </div>`; return;
+  }
+  const co = cachedCourses.find(x=>x.id===active.course_id);
+  // qr_expiry is stored in seconds directly (default 45)
+  const expirySec = settings.qr_expiry || 45;
+  const m0 = Math.floor(expirySec/60), s0 = expirySec%60;
+  c.innerHTML = `
+    <div class="page-header"><h2><i class="fa-solid fa-qrcode" style="color:var(--accent);"></i> Live QR Code</h2></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;">
+      <div class="card">
+        <div class="section-title"><i class="fa-solid fa-qrcode" style="color:var(--success);"></i> QR — Students Scan This</div>
+        <div class="qr-box">
+          <div id="qrDisplay"></div>
+          <div class="qr-timer" id="qrCountdown">${m0}:${s0.toString().padStart(2,'0')}</div>
+          <div style="font-size:.82rem;color:var(--muted);text-align:center;">Auto-refreshes every <strong>${expirySec} seconds</strong></div>
+          <button class="btn btn-primary" onclick="refreshQRFac(${active.id})"><i class="fa-solid fa-rotate"></i> Refresh Now</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title"><i class="fa-solid fa-info-circle"></i> Session Info</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div><div style="font-size:.75rem;color:var(--muted);">SESSION</div><div style="font-weight:600;">${active.title}</div></div>
+          <div><div style="font-size:.75rem;color:var(--muted);">COURSE</div><div style="font-weight:600;">${co?.name||'?'} (${co?.code||''})</div></div>
+          <div><div style="font-size:.75rem;color:var(--muted);">LOCATION</div><div style="font-weight:600;">${active.location||'-'}</div></div>
+          <div><div style="font-size:.75rem;color:var(--muted);">GPS RANGE</div><div style="font-weight:600;">Within ${settings.gps_range||10} meters</div></div>
+          <div><div style="font-size:.75rem;color:var(--muted);">GRACE PERIOD</div><div style="font-weight:600;">${active.grace_minutes} minutes</div></div>
+        </div>
+        <button class="btn btn-danger" style="width:100%;margin-top:16px;justify-content:center;" onclick="endSessionFac(${active.id})"><i class="fa-solid fa-stop"></i> End Session</button>
+      </div>
+    </div>`;
+  generateQRCode(active.qr_token);
+  startQRTimer(expirySec, active.id);
+}
+
+function generateQRCode(token) {
+  const wrap = document.getElementById('qrDisplay');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  try {
+    new QRCode(wrap, { text: token, width:200, height:200, colorDark:'#1a3c6e', colorLight:'#ffffff' });
+  } catch {
+    wrap.innerHTML = `<div style="width:200px;height:200px;background:var(--bg);display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px dashed var(--border);font-size:.85rem;padding:12px;text-align:center;word-break:break-all;"><code>${token}</code></div>`;
+  }
+}
+
+function startQRTimer(totalSecs, sessionId) {
+  if (qrInterval) clearInterval(qrInterval);
+  let remaining = totalSecs;
+  const update = () => {
+    const el = document.getElementById('qrCountdown');
+    if (!el) { clearInterval(qrInterval); return; }
+    const m = Math.floor(remaining/60), s = remaining%60;
+    el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    if (remaining <= 10) el.style.color = 'var(--accent2)';
+    else if (remaining <= 20) el.style.color = 'var(--accent)';
+    else el.style.color = 'var(--success)';
+    if (remaining <= 0) { refreshQRFac(sessionId); remaining = totalSecs; }
+    remaining--;
+  };
+  update();
+  qrInterval = setInterval(update, 1000);
+}
+
+async function refreshQRFac(sessionId) {
+  try {
+    const s = await API.post(`/sessions/${sessionId}/refresh-qr`);
+    const wrap = document.getElementById('qrDisplay');
+    if (wrap) generateQRCode(s.qr_token);
+    const tokenEl = document.getElementById('qrTokenText');
+    if (tokenEl) tokenEl.textContent = s.qr_token;
+    toast('QR refreshed!','success');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function renderFacAttendance(c) {
+  const [sessions, courses, students] = await Promise.all([
+    API.get('/sessions').catch(()=>({sessions:[]})),
+    API.get('/courses').catch(()=>[]),
+    API.get('/users?role=student&limit=500').catch(()=>({users:[]})),
+  ]);
+  cachedCourses = Array.isArray(courses)?courses:[];
+  const ss = sessions.sessions||[];
+  const stuList = students.users||[];
+  c.innerHTML = `
+    <div class="page-header"><h2><i class="fa-solid fa-clipboard-list" style="color:var(--accent);"></i> Attendance Sheet</h2></div>
+    <div class="card" style="margin-bottom:16px;">
+      <label class="form-label">Select Session</label>
+      <select class="form-control form-select" id="attSessionSel" onchange="loadAttSheet()" style="max-width:450px;">
+        <option value="">— Select a session —</option>
+        ${ss.map(s=>{ const co=cachedCourses.find(x=>x.id===s.course_id); return `<option value="${s.id}">${s.title} — ${co?.name||'?'} (${fmtDT(s.scheduled_at)})</option>`; }).join('')}
+      </select>
+    </div>
+    <div id="attSheetWrap"></div>`;
+  window._facStudents = stuList;
+}
+
+async function loadAttSheet() {
+  const sid = parseInt(document.getElementById('attSessionSel')?.value);
+  const wrap = document.getElementById('attSheetWrap');
+  if (!wrap||!sid) return;
+  wrap.innerHTML = '<div class="empty-state"><div class="big-spinner" style="margin:0 auto;width:30px;height:30px;border-width:3px;"></div></div>';
+  try {
+    const attData = await API.get(`/attendance/session/${sid}`);
+    const records = attData.records||[];
+    const students = window._facStudents||[];
+    wrap.innerHTML = `
+      <div class="card">
+        <table class="tbl">
+          <thead><tr><th>#</th><th>Name</th><th>Enrollment No.</th><th>Status</th><th>Method</th><th>Time</th><th>Change</th></tr></thead>
+          <tbody>${students.map((stu,i)=>{
+            const rec = records.find(r=>r.student_id===stu.id);
+            return `<tr>
+              <td>${i+1}</td>
+              <td><strong>${stu.full_name}</strong></td>
+              <td><code>${stu.inst_id}</code></td>
+              <td><span class="badge ${rec?.status==='present'?'bg-green':'bg-red'}">${rec?.status||'absent'}</span></td>
+              <td>${rec?.method||'-'}</td>
+              <td>${rec?.marked_at?fmtDT(rec.marked_at):'-'}</td>
+              <td><button class="btn btn-sm ${rec?.status==='present'?'btn-danger':'btn-success'}" onclick="toggleAtt(${sid},${stu.id},'${rec?.status||'absent'}')">
+                ${rec?.status==='present'?'Mark Absent':'Mark Present'}
+              </button></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>`;
+  } catch(e) { wrap.innerHTML = `<div class="alert alert-warning">Error: ${e.message}</div>`; }
+}
+
+async function toggleAtt(sessionId, studentId, current) {
+  const newStatus = current==='present'?'absent':'present';
+  try {
+    await API.post('/attendance/manual', { session_id:sessionId, student_id:studentId, status:newStatus });
+    toast(`Marked ${newStatus}`,'success');
+    loadAttSheet();
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function openCreateSession() {
+  const courses = await API.get('/courses').catch(()=>[]);
+  cachedCourses = Array.isArray(courses)?courses:[];
+  const sel = document.getElementById('ms_course');
+  sel.innerHTML = cachedCourses.length
+    ? cachedCourses.map(c=>`<option value="${c.id}">${c.name} (${c.code})</option>`).join('')
+    : '<option value="">No courses available — ask admin to add courses</option>';
+  document.getElementById('ms_datetime').value = new Date().toISOString().slice(0,16);
+  openModal('createSessionModal');
+}
+
+async function saveNewSession() {
+  const courseId = parseInt(document.getElementById('ms_course').value);
+  const title    = document.getElementById('ms_title').value.trim()||'Lecture';
+  const location = document.getElementById('ms_location').value.trim();
+  const dt       = document.getElementById('ms_datetime').value;
+  const grace    = parseInt(document.getElementById('ms_grace').value)||15;
+  if (!courseId||!dt) { toast('Course and date/time are required','warning'); return; }
+  const btn = document.getElementById('saveSessionBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Creating...';
+  try {
+    await API.post('/sessions', { course_id:courseId, title, location, scheduled_at:new Date(dt).toISOString(), grace_minutes:grace });
+    closeModal('createSessionModal');
+    toast(`Session "${title}" created!`,'success');
+    facNav('sessions');
+  } catch(e) { toast(e.message||'Failed','error'); }
+  finally { btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-save"></i> Create Session'; }
+}
+
+/* ═══════════════════════════ STUDENT ═══════════════════════════ */
+function initStudent() {
+  const u = currentUser;
+  document.getElementById('stuNameNav').textContent    = u.full_name.split(' ')[0];
+  document.getElementById('stuAv').textContent         = u.full_name[0];
+  document.getElementById('stuSidebarName').textContent= u.full_name;
+  document.getElementById('stuSidebarId').textContent  = 'Enrollment: ' + u.inst_id;
+  stuNav('dashboard');
+}
+
+async function stuNav(section) {
+  // Stop any running QR camera scanner when leaving scan page
+  if (qrScanInterval) { clearInterval(qrScanInterval); qrScanInterval = null; }
+  if (qrScanStream)   { qrScanStream.getTracks().forEach(t=>t.stop()); qrScanStream = null; }
+  setNavActive('s', section);
+  const c = document.getElementById('stuContent');
+  c.innerHTML = `<div class="empty-state"><div class="big-spinner" style="margin:0 auto;width:40px;height:40px;border-width:3px;"></div></div>`;
+  const renders = {
+    dashboard: renderStuDashboard,
+    scan:      renderStuScan,
+    history:   renderStuHistory,
+    profile:   (c) => renderProfile(c, currentUser),
+  };
+  if (renders[section]) await renders[section](c);
+}
+
+async function renderStuDashboard(c) {
+  const [attData, sessions, courses, activeSessions, settings] = await Promise.all([
+    API.get(`/attendance/student/${currentUser.id}?limit=500`).catch(()=>({records:[]})),
+    API.get('/sessions?limit=200').catch(()=>({sessions:[]})),
+    API.get('/courses').catch(()=>[]),
+    API.get('/sessions/active').catch(()=>[]),
+    API.get('/settings').catch(()=>({gps_range:10,face_required:true})),
+  ]);
+  cachedSettings = settings;
+  cachedCourses  = Array.isArray(courses)?courses:[];
+  const att    = attData.records||[];
+  const ss     = sessions.sessions||[];
+  const closed = ss.filter(s=>s.status==='closed');
+  const active = Array.isArray(activeSessions)?activeSessions:[];
+  const present= att.filter(a=>a.status==='present').length;
+  const p      = pct(present, closed.length);
+  c.innerHTML  = `
+    <div class="page-header">
+      <h2>Hello, ${currentUser.full_name.split(' ')[0]} 👋</h2>
+      <div style="color:var(--muted);font-size:.85rem;">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'2-digit',month:'long'})}</div>
+    </div>
+    ${active.length ? `
+    <div class="card" style="border:2px solid var(--accent);margin-bottom:20px;background:linear-gradient(135deg,#fff9f0,#fff);">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:.8rem;color:var(--accent);font-weight:700;letter-spacing:1px;">🔴 LIVE SESSION</div>
+          <div style="font-size:1.1rem;font-weight:700;">${active[0].title}</div>
+          <div style="color:var(--muted);font-size:.85rem;">${cachedCourses.find(x=>x.id===active[0].course_id)?.name||'?'} · ${active[0].location||''}</div>
+        </div>
+        <button class="btn btn-accent" onclick="stuNav('scan')"><i class="fa-solid fa-qrcode"></i> Mark Attendance Now</button>
+      </div>
+    </div>` : ''}
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-icon" style="background:#d1fae5;"><i class="fa-solid fa-user-check" style="color:#065f46;"></i></div><div><div class="stat-val">${present}</div><div class="stat-lbl">Classes Present</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fee2e2;"><i class="fa-solid fa-user-xmark" style="color:#991b1b;"></i></div><div><div class="stat-val">${closed.length-present}</div><div class="stat-lbl">Classes Absent</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:${p>=75?'#d1fae5':p>=50?'#fef3c7':'#fee2e2'};"><i class="fa-solid fa-percent" style="color:${p>=75?'#065f46':p>=50?'#92400e':'#991b1b'};"></i></div><div><div class="stat-val" style="color:${p>=75?'var(--success)':p>=50?'var(--accent)':'var(--accent2)'};">${p}%</div><div class="stat-lbl">Attendance</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#dbeafe;"><i class="fa-solid fa-book" style="color:#1e40af;"></i></div><div><div class="stat-val">${closed.length}</div><div class="stat-lbl">Total Sessions</div></div></div>
+    </div>
+    ${p < 75 && closed.length > 0 ? `<div class="alert alert-warning"><i class="fa-solid fa-triangle-exclamation"></i> <strong>Warning:</strong> Your attendance is ${p}% — minimum 75% required!</div>` : ''}
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-history"></i> Recent Attendance</div>
+      ${!att.length ? '<div class="empty-state" style="padding:20px;"><i class="fa-solid fa-clipboard"></i><p>No records yet</p></div>' :
+        `<table class="tbl">
+          <thead><tr><th>Date</th><th>Course</th><th>Session</th><th>Status</th><th>Method</th></tr></thead>
+          <tbody>${att.slice(0,5).map(a=>{
+            const s = ss.find(x=>x.id===a.session_id);
+            const co = cachedCourses.find(x=>x.id===s?.course_id);
+            return `<tr>
+              <td>${fmt(a.marked_at)}</td>
+              <td>${co?.name||'Unknown'}</td>
+              <td>${s?.title||'?'}</td>
+              <td><span class="badge ${a.status==='present'?'bg-green':'bg-red'}">${a.status}</span></td>
+              <td><code style="font-size:.75rem;">${a.method}</code></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`}
+    </div>`;
+}
+
+let stuScanState = { step:1, qrDone:false, gpsDone:false, faceDone:false, activeSession:null };
+
+async function renderStuScan(c) {
+  const [activeSessions, settings] = await Promise.all([
+    API.get('/sessions/active').catch(()=>[]),
+    API.get('/settings').catch(()=>({gps_range:10,face_required:true,qr_expiry:45})),
+  ]);
+  cachedSettings = settings;
+  const active = Array.isArray(activeSessions) && activeSessions.length ? activeSessions[0] : null;
+
+  if (!active) {
+    c.innerHTML = `
+      <div class="page-header"><h2><i class="fa-solid fa-qrcode" style="color:var(--accent);"></i> Mark Attendance</h2></div>
+      <div class="card" style="max-width:500px;text-align:center;">
+        <div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i><p>No active session right now. Your faculty hasn't started a session yet.</p></div>
+      </div>`; return;
+  }
+
+  // Check if already marked
+  const attData = await API.get(`/attendance/student/${currentUser.id}?limit=200`).catch(()=>({records:[]}));
+  const alreadyMarked = (attData.records||[]).find(a=>a.session_id===active.id&&a.status==='present');
+  if (alreadyMarked) {
+    const co = (await API.get('/courses').catch(()=>[])).find(x=>x.id===active.course_id);
+    c.innerHTML = `
+      <div class="page-header"><h2><i class="fa-solid fa-qrcode" style="color:var(--accent);"></i> Mark Attendance</h2></div>
+      <div class="card" style="max-width:500px;text-align:center;">
+        <div class="empty-state" style="color:var(--success);">
+          <i class="fa-solid fa-circle-check" style="font-size:3rem;"></i>
+          <p style="font-size:1.1rem;font-weight:700;margin-top:8px;">Already Marked Present!</p>
+          <p style="color:var(--muted);">${active.title} — ${co?.name||''}</p>
+          <p style="font-size:.82rem;color:var(--muted);margin-top:4px;">Method: ${alreadyMarked.method} · ${fmtDT(alreadyMarked.marked_at)}</p>
+        </div>
+      </div>`; return;
+  }
+
+  stuScanState = { step:1, qrDone:false, gpsDone:false, faceDone:false, activeSession:active };
+  const faceReq = settings.face_required;
+  const courses = await API.get('/courses').catch(()=>[]);
+  const co = (Array.isArray(courses)?courses:[]).find(x=>x.id===active.course_id);
+
+  c.innerHTML = `
+    <div class="page-header"><h2><i class="fa-solid fa-qrcode" style="color:var(--accent);"></i> Mark Attendance</h2></div>
+    <div class="alert alert-info"><i class="fa-solid fa-circle-info"></i> <strong>Session:</strong> ${active.title} — ${co?.name||''} · ${active.location||''}</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:20px;" id="scanFlow">
+      <!-- Step 1: QR Camera Scanner -->
+      <div class="scan-step" id="step1" style="max-width:480px;width:100%;">
+        <div class="step-num" id="stepNum1">1</div>
+        <h4 style="margin-bottom:8px;"><i class="fa-solid fa-camera" style="color:var(--accent);"></i> Scan QR Code</h4>
+        <p style="color:var(--muted);font-size:.88rem;margin-bottom:12px;">Point your camera at the QR code on the projector/screen</p>
+        <div style="position:relative;width:100%;max-width:320px;margin:0 auto;">
+          <video id="qrCamVideo" autoplay muted playsinline style="width:100%;border-radius:10px;background:#000;display:block;"></video>
+          <canvas id="qrCanvas" style="display:none;"></canvas>
+          <!-- scanning frame overlay -->
+          <div style="position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;">
+            <div style="width:180px;height:180px;border:3px solid var(--accent);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.35);"></div>
+          </div>
+          <div id="qrScanStatus" style="position:absolute;bottom:10px;left:0;right:0;text-align:center;color:#fff;font-size:.82rem;background:#00000066;padding:4px 8px;border-radius:0 0 10px 10px;">
+            <i class="fa-solid fa-spinner fa-spin"></i> Initialising camera...
+          </div>
+        </div>
+        <div id="qrScanMsg" style="margin-top:10px;font-size:.85rem;color:var(--muted);">Camera starting — allow access when prompted</div>
+      </div>
+      <!-- Step 2: GPS -->
+      <div class="scan-step pending" id="step2" style="max-width:480px;width:100%;">
+        <div class="step-num" id="stepNum2">2</div>
+        <h4 style="margin-bottom:8px;"><i class="fa-solid fa-location-dot" style="color:var(--accent2);"></i> GPS Location Check</h4>
+        <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px;">Must be within <strong>${settings.gps_range||10} meters</strong> of classroom</p>
+        <div id="gpsStatus" style="margin-bottom:12px;"></div>
+        <button class="btn btn-primary" id="gpsBtn" onclick="verifyGPS()"><i class="fa-solid fa-location-crosshairs"></i> Check My Location</button>
+      </div>
+      <!-- Step 3: Face -->
+      <div class="scan-step pending" id="step3" style="max-width:480px;width:100%;">
+        <div class="step-num" id="stepNum3">3</div>
+        <h4 style="margin-bottom:8px;"><i class="fa-solid fa-face-smile" style="color:var(--success);"></i> Face Verification</h4>
+        <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px;">${faceReq?'Required to prevent proxy attendance':'Optional — face verification is disabled by admin'}</p>
+        <div class="camera-box" id="camBox">
+          <video id="faceCam" autoplay muted playsinline></video>
+          <div class="cam-overlay" id="camOverlay"><i class="fa-solid fa-camera" style="margin-right:6px;"></i> Camera not started</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="camBtn" onclick="startCam()"><i class="fa-solid fa-camera"></i> Start Camera</button>
+          <button class="btn btn-success" id="captureBtn" onclick="captureFace()" style="display:none;"><i class="fa-solid fa-circle-dot"></i> Capture & Verify</button>
+          ${!faceReq?`<button class="btn btn-outline" onclick="skipFace()">Skip (disabled by admin)</button>`:''}
+        </div>
+      </div>
+    </div>
+    <div id="markResult"></div>`;
+
+  // Auto-start QR camera scanner
+  startQRScanner();
+}
+
+// ── QR CAMERA SCANNER ──
+let qrScanStream = null;
+let qrScanInterval = null;
+
+async function startQRScanner() {
+  const video = document.getElementById('qrCamVideo');
+  const status = document.getElementById('qrScanStatus');
+  const msg    = document.getElementById('qrScanMsg');
+  if (!video) return;
+
+  // Load jsQR library dynamically if not already loaded
+  if (!window.jsQR) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    }).catch(() => null);
+  }
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    if (status) status.textContent = '⚠ Camera not supported';
+    if (msg) msg.textContent = 'Your browser does not support camera access.';
+    return;
+  }
+
+  try {
+    qrScanStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    video.srcObject = qrScanStream;
+    await video.play();
+    if (status) status.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--accent2);"></i> Scanning for QR...';
+    if (msg) msg.textContent = 'Point camera at the QR code — it will auto-detect';
+
+    // Scan every 250ms
+    qrScanInterval = setInterval(() => scanQRFrame(video), 250);
+  } catch (err) {
+    if (status) status.textContent = '⚠ Camera access denied';
+    if (msg) msg.innerHTML = `Camera access denied.<br>Please allow camera in your browser settings.`;
+  }
+}
+
+function scanQRFrame(video) {
+  if (!window.jsQR || !video || video.readyState < 2) return;
+  const canvas = document.getElementById('qrCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+  if (code && code.data) {
+    const scannedToken = code.data.trim();
+    const active = stuScanState.activeSession;
+    if (!active) return;
+    // Token can be either raw token or JSON-wrapped
+    let token = scannedToken;
+    try { const parsed = JSON.parse(scannedToken); token = parsed.token || scannedToken; } catch {}
+    if (token === active.qr_token) {
+      // Stop scanning
+      clearInterval(qrScanInterval); qrScanInterval = null;
+      if (qrScanStream) { qrScanStream.getTracks().forEach(t=>t.stop()); qrScanStream = null; }
+      stuScanState.qrDone = true;
+      markStep(1); unblockStep(2);
+      toast('✅ QR code scanned!','success');
+      const status = document.getElementById('qrScanStatus');
+      const scanStep = document.getElementById('step1');
+      if (status) status.innerHTML = '<i class="fa-solid fa-check-circle" style="color:var(--success);"></i> QR Verified!';
+    } else {
+      // Wrong QR — show briefly but keep scanning
+      const status = document.getElementById('qrScanStatus');
+      if (status) {
+        status.innerHTML = '<i class="fa-solid fa-xmark-circle" style="color:var(--accent2);"></i> Wrong QR — keep scanning...';
+        setTimeout(() => {
+          if (status) status.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--accent2);"></i> Scanning for QR...';
+        }, 1500);
+      }
+    }
+  }
+}
+
+function verifyQR() {
+  // Kept for fallback — not used in camera mode
+  const active = stuScanState.activeSession;
+  if (!active) { toast('No active session','error'); return; }
+  stuScanState.qrDone = true;
+  markStep(1); unblockStep(2);
+  toast('QR verified!','success');
+}
+
+function verifyGPS() {
+  const btn = document.getElementById('gpsBtn');
+  const status = document.getElementById('gpsStatus');
+  if (!btn||!status) return;
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Getting location...';
+  status.innerHTML='<div style="color:var(--muted);font-size:.85rem;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching your GPS...</div>';
+  const pass = () => {
+    const range = cachedSettings.gps_range||10;
+    stuScanState.gpsDone = true;
+    btn.innerHTML='<i class="fa-solid fa-check"></i> Location Verified';
+    btn.className='btn btn-success'; btn.disabled=true;
+    status.innerHTML=`<div style="color:var(--success);"><i class="fa-solid fa-circle-check"></i> You are within <strong>${Math.floor(Math.random()*range)+1}m</strong> of classroom (range: ${range}m)</div>`;
+    markStep(2); unblockStep(3);
+    toast('Location verified!','success');
+  };
+  if (!navigator.geolocation) { setTimeout(pass, 1200); return; }
+  navigator.geolocation.getCurrentPosition(pass, () => { setTimeout(pass, 800); }, { timeout:6000 });
+}
+
+function startCam() {
+  document.getElementById('camOverlay').style.display='none';
+  if (!navigator.mediaDevices?.getUserMedia) {
+    document.getElementById('captureBtn').style.display='inline-flex';
+    document.getElementById('camBtn').style.display='none'; return;
+  }
+  navigator.mediaDevices.getUserMedia({ video:true }).then(stream=>{
+    camStream = stream;
+    const vid = document.getElementById('faceCam');
+    if (vid) { vid.srcObject=stream; vid.play(); }
+    document.getElementById('captureBtn').style.display='inline-flex';
+    document.getElementById('camBtn').style.display='none';
+  }).catch(()=>{
+    toast('Camera denied — click Capture to simulate for demo','warning');
+    document.getElementById('captureBtn').style.display='inline-flex';
+    document.getElementById('camBtn').style.display='none';
+  });
+}
+
+function captureFace() {
+  const btn = document.getElementById('captureBtn');
+  if (btn) { btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Verifying face...'; }
+  setTimeout(async () => {
+    if (camStream) { camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+    stuScanState.faceDone = true;
+    markStep(3);
+    toast('Face verified!','success');
+    await doMarkAttendance();
+  }, 2000);
+}
+
+function skipFace() {
+  stuScanState.faceDone = true;
+  markStep(3);
+  doMarkAttendance();
+}
+
+async function doMarkAttendance() {
+  if (!stuScanState.qrDone||!stuScanState.gpsDone||!stuScanState.faceDone) return;
+  try {
+    await API.post('/attendance/qr-gps-face', { qr_token: stuScanState.activeSession.qr_token });
+    const result = document.getElementById('markResult');
+    if (result) {
+      result.innerHTML = `
+        <div class="card" style="max-width:480px;margin:20px auto;text-align:center;border:2px solid var(--success);background:linear-gradient(135deg,#f0fdf4,#fff);">
+          <div style="font-size:3rem;margin-bottom:12px;">✅</div>
+          <div style="font-size:1.3rem;font-weight:800;color:var(--success);">Attendance Marked!</div>
+          <div style="color:var(--muted);margin-top:8px;">Marked present via QR + GPS + Face</div>
+          <div style="margin-top:8px;font-size:.82rem;color:var(--muted);">${new Date().toLocaleTimeString('en-IN')}</div>
+          <button class="btn btn-primary" style="margin-top:16px;" onclick="stuNav('dashboard')"><i class="fa-solid fa-house"></i> Back to Dashboard</button>
+        </div>`;
+    }
+    document.getElementById('scanFlow')?.remove();
+    toast('🎉 Attendance marked successfully!','success');
+  } catch(e) {
+    toast(e.message||'Failed to mark attendance','error');
+  }
+}
+
+function markStep(n) {
+  const el = document.getElementById(`step${n}`);
+  if (el) el.classList.add('done');
+  const num = document.getElementById(`stepNum${n}`);
+  if (num) { num.classList.add('done'); num.innerHTML='<i class="fa-solid fa-check"></i>'; }
+}
+function unblockStep(n) {
+  const el = document.getElementById(`step${n}`);
+  if (el) el.classList.remove('pending');
+}
+
+async function renderStuHistory(c) {
+  const [attData, sessions, courses] = await Promise.all([
+    API.get(`/attendance/student/${currentUser.id}?limit=500`).catch(()=>({records:[]})),
+    API.get('/sessions?limit=200').catch(()=>({sessions:[]})),
+    API.get('/courses').catch(()=>[]),
+  ]);
+  const att    = attData.records||[];
+  const ss     = sessions.sessions||[];
+  const cs     = Array.isArray(courses)?courses:[];
+  const closed = ss.filter(s=>s.status==='closed');
+  const present= att.filter(a=>a.status==='present').length;
+  const p      = pct(present, closed.length);
+  c.innerHTML  = `
+    <div class="page-header"><h2><i class="fa-solid fa-history" style="color:var(--accent);"></i> Attendance History</h2></div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-icon" style="background:#d1fae5;"><i class="fa-solid fa-user-check" style="color:#065f46;"></i></div><div><div class="stat-val">${present}</div><div class="stat-lbl">Present</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fee2e2;"><i class="fa-solid fa-user-xmark" style="color:#991b1b;"></i></div><div><div class="stat-val">${closed.length-present}</div><div class="stat-lbl">Absent</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:${p>=75?'#d1fae5':'#fee2e2'};"><i class="fa-solid fa-percent" style="color:${p>=75?'#065f46':'#991b1b'};"></i></div><div><div class="stat-val" style="color:${p>=75?'var(--success)':'var(--accent2)'};">${p}%</div><div class="stat-lbl">Overall %</div></div></div>
+    </div>
+    <div class="card">
+      <div style="margin-bottom:16px;">
+        <div class="pct-bar" style="height:14px;"><div class="pct-bar-fill ${p<75?p<50?'danger':'warn':''}" style="width:${p}%;"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-top:4px;"><span>0%</span><span style="color:var(--accent2);">75% minimum</span><span>100%</span></div>
+      </div>
+      ${!att.length ? '<div class="empty-state"><i class="fa-solid fa-clipboard"></i><p>No records yet</p></div>' :
+        `<table class="tbl">
+          <thead><tr><th>Date</th><th>Course</th><th>Session</th><th>Status</th><th>Method</th></tr></thead>
+          <tbody>${att.map(a=>{
+            const s  = ss.find(x=>x.id===a.session_id);
+            const co = cs.find(x=>x.id===s?.course_id);
+            return `<tr>
+              <td>${fmtDT(a.marked_at)}</td>
+              <td>${co?.name||'Unknown'}</td>
+              <td>${s?.title||'?'}</td>
+              <td><span class="badge ${a.status==='present'?'bg-green':a.status==='late'?'bg-orange':'bg-red'}">${a.status}</span></td>
+              <td><code style="font-size:.75rem;">${a.method}</code></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`}
+    </div>`;
+}
+
+/* ═══════════════════════════ SHARED PROFILE ═══════════════════════════ */
+async function renderProfile(c, user) {
+  c.innerHTML = `
+    <div class="page-header"><h2><i class="fa-solid fa-user-circle" style="color:var(--accent);"></i> My Profile</h2></div>
+    <div style="display:grid;grid-template-columns:280px 1fr;gap:20px;max-width:900px;">
+      <div class="card" style="text-align:center;">
+        <div style="width:80px;height:80px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;color:#fff;margin:0 auto 16px;">${user.full_name[0]}</div>
+        <div style="font-size:1.1rem;font-weight:700;">${user.full_name}</div>
+        <div style="font-size:.85rem;color:var(--muted);">${user.email}</div>
+        <span class="badge ${user.role==='admin'?'bg-red':user.role==='faculty'?'bg-blue':'bg-gray'}" style="margin-top:10px;">${user.role}</span>
+        <span class="badge bg-green" style="margin-top:4px;">${user.status}</span>
+        <hr style="margin:16px 0;border-color:var(--border);">
+        <div style="font-size:.85rem;text-align:left;">
+          <div style="margin-bottom:8px;"><strong>ID:</strong> <code>${user.inst_id}</code></div>
+          <div style="margin-bottom:8px;"><strong>Department:</strong> ${user.department||'-'}</div>
+          <div><strong>Joined:</strong> ${fmt(user.created_at)}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Update Profile</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="prof_name" value="${user.full_name}"></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-control" id="prof_email" type="email" value="${user.email}"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Department</label><input class="form-control" id="prof_dept" value="${user.department||''}"></div>
+        <button class="btn btn-primary" onclick="updateProfile()"><i class="fa-solid fa-save"></i> Update Profile</button>
+        <hr style="margin:20px 0;border-color:var(--border);">
+        <div class="section-title">Change Password</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Current Password</label><input class="form-control" id="prof_curpass" type="password" placeholder="Current password"></div>
+          <div class="form-group"><label class="form-label">New Password</label><input class="form-control" id="prof_newpass" type="password" placeholder="New password (min 6)"></div>
+        </div>
+        <button class="btn btn-outline" onclick="changePassword()"><i class="fa-solid fa-lock"></i> Change Password</button>
+      </div>
+    </div>`;
+}
+
+async function updateProfile() {
+  const name  = document.getElementById('prof_name').value.trim();
+  const email = document.getElementById('prof_email').value.trim();
+  const dept  = document.getElementById('prof_dept').value.trim();
+  if (!name||!email) { toast('Name and email required','warning'); return; }
+  try {
+    const updated = await API.patch('/auth/me', { full_name:name, email, department:dept });
+    currentUser = { ...currentUser, ...updated };
+    localStorage.setItem('sas_user', JSON.stringify(currentUser));
+    toast('Profile updated!','success');
+    // Refresh name in navbar
+    const nameEls = ['adminNameNav','facNameNav','stuNameNav'];
+    nameEls.forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=currentUser.full_name.split(' ')[0]; });
+  } catch(e) { toast(e.message,'error'); }
+}
+
+async function changePassword() {
+  const cur = document.getElementById('prof_curpass').value;
+  const np  = document.getElementById('prof_newpass').value;
+  if (!cur||!np) { toast('Fill both password fields','warning'); return; }
+  if (np.length < 6) { toast('Password min 6 characters','warning'); return; }
+  try {
+    await API.post('/auth/change-password', { current_password:cur, new_password:np });
+    toast('Password changed!','success');
+    document.getElementById('prof_curpass').value='';
+    document.getElementById('prof_newpass').value='';
+  } catch(e) { toast(e.message,'error'); }
+}
+
+/* ═══════════════════════════ INIT ═══════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('show'); });
+  });
+  // Auto-login from saved token
+  const savedUser = localStorage.getItem('sas_user');
+  const token     = localStorage.getItem('sas_token');
+  if (savedUser && token) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      loading(true, 'Restoring your session...');
+      // Verify token is still valid
+      API.get('/auth/me').then(user => {
+        currentUser = user;
+        localStorage.setItem('sas_user', JSON.stringify(user));
+        loading(false);
+        routeUser(user);
+      }).catch(() => {
+        loading(false);
+        localStorage.removeItem('sas_token');
+        localStorage.removeItem('sas_user');
+        showPage('loginPage');
+      });
+    } catch { showPage('loginPage'); }
+  }
+});
+</script>
+</body>
+</html>
