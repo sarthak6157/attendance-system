@@ -207,34 +207,115 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 </div>
 
 <!-- ═══════════════ REGISTER ═══════════════ -->
-<div id="registerPage" class="page" style="background:var(--bg);align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:20px;padding:36px;width:100%;max-width:520px;box-shadow:0 20px 60px #00000022;">
+<div id="registerPage" class="page" style="background:linear-gradient(135deg,#0f1e3d,#1a3c6e);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:540px;box-shadow:0 24px 80px #00000044;max-height:95vh;overflow-y:auto;">
     <div style="text-align:center;margin-bottom:22px;">
-      <div style="font-size:1.3rem;font-weight:800;color:var(--primary);">Create Account</div>
-      <div style="font-size:.85rem;color:var(--muted);">Register as student — await admin approval</div>
+      <div style="width:50px;height:50px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 10px;color:#fff;"><i class="fa-solid fa-user-plus"></i></div>
+      <div style="font-size:1.2rem;font-weight:800;color:var(--primary);">Student Registration</div>
+      <div style="font-size:.82rem;color:var(--muted);">Teerthanker Mahaveer University · Await admin approval after registering</div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Full Name *</label><input class="form-control" id="regName" placeholder="Your full name"></div>
-      <div class="form-group"><label class="form-label">Enrollment No. *</label><input class="form-control" id="regEnroll" placeholder="e.g. 2300123456"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Email *</label><input class="form-control" id="regEmail" type="email" placeholder="your@email.com"></div>
-      <div class="form-group"><label class="form-label">Department</label>
-        <select class="form-control form-select" id="regDept">
-          <option>B.Tech CSE</option><option>B.Tech ECE</option><option>B.Tech ME</option>
-          <option>BCA</option><option>MCA</option><option>MBA</option><option>B.Pharma</option>
-        </select>
+
+    <!-- Personal Info -->
+    <div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;"><i class="fa-solid fa-user"></i> Personal Information</div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Full Name *</label>
+          <input class="form-control" id="regName" placeholder="Your full name">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Enrollment No. *</label>
+          <input class="form-control" id="regEnroll" placeholder="e.g. 2300123456">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:10px;margin-bottom:0;">
+        <label class="form-label">Email Address *</label>
+        <input class="form-control" id="regEmail" type="email" placeholder="your@email.com or your@tmu.ac.in">
       </div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Password *</label><input class="form-control" id="regPass" type="password" placeholder="Min 6 chars"></div>
-      <div class="form-group"><label class="form-label">Confirm Password *</label><input class="form-control" id="regPass2" type="password" placeholder="Repeat password"></div>
+
+    <!-- Course / Branch / Section -->
+    <div style="background:#f0f7ff;border-radius:10px;padding:14px;margin-bottom:14px;border:1.5px solid #dbeafe;">
+      <div style="font-size:.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;"><i class="fa-solid fa-graduation-cap"></i> Academic Details</div>
+
+      <!-- Step 1: Course -->
+      <div class="form-group">
+        <label class="form-label">Course / Program *</label>
+        <select class="form-control form-select" id="regCourse" onchange="updateBranches()">
+          <option value="">— Select Course —</option>
+          <option value="B.Tech">B.Tech (Bachelor of Technology)</option>
+          <option value="B.E">B.E (Bachelor of Engineering)</option>
+          <option value="BCA">BCA (Bachelor of Computer Applications)</option>
+          <option value="MCA">MCA (Master of Computer Applications)</option>
+          <option value="MBA">MBA (Master of Business Administration)</option>
+          <option value="B.Pharma">B.Pharma (Bachelor of Pharmacy)</option>
+          <option value="M.Tech">M.Tech (Master of Technology)</option>
+          <option value="B.Sc">B.Sc (Bachelor of Science)</option>
+          <option value="M.Sc">M.Sc (Master of Science)</option>
+          <option value="BBA">BBA (Bachelor of Business Administration)</option>
+          <option value="B.Com">B.Com (Bachelor of Commerce)</option>
+          <option value="LLB">LLB (Bachelor of Laws)</option>
+          <option value="MBBS">MBBS (Bachelor of Medicine)</option>
+        </select>
+      </div>
+
+      <!-- Step 2: Branch (depends on Course) -->
+      <div class="form-group" id="branchGroup" style="display:none;">
+        <label class="form-label">Branch / Specialization *</label>
+        <select class="form-control form-select" id="regBranch">
+          <option value="">— Select Branch —</option>
+        </select>
+      </div>
+
+      <!-- Step 3: Section + Semester -->
+      <div class="form-row" id="secSemGroup" style="display:none;margin-bottom:0;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Section *</label>
+          <select class="form-control form-select" id="regSection">
+            <option value="">— Select Section —</option>
+            <option value="A">Section A</option>
+            <option value="B">Section B</option>
+            <option value="C">Section C</option>
+            <option value="D">Section D</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Semester *</label>
+          <select class="form-control form-select" id="regSem">
+            <option value="">— Select Semester —</option>
+            <option value="1st">1st Semester</option>
+            <option value="2nd">2nd Semester</option>
+            <option value="3rd">3rd Semester</option>
+            <option value="4th">4th Semester</option>
+            <option value="5th">5th Semester</option>
+            <option value="6th">6th Semester</option>
+            <option value="7th">7th Semester</option>
+            <option value="8th">8th Semester</option>
+          </select>
+        </div>
+      </div>
     </div>
-    <button class="btn btn-accent" style="width:100%;justify-content:center;padding:11px;" id="regBtn" onclick="doRegister()">
-      <i class="fa-solid fa-user-plus"></i> Register
+
+    <!-- Password -->
+    <div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px;">
+      <div style="font-size:.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;"><i class="fa-solid fa-lock"></i> Set Password</div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Password *</label>
+          <input class="form-control" id="regPass" type="password" placeholder="Min 6 characters">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Confirm Password *</label>
+          <input class="form-control" id="regPass2" type="password" placeholder="Repeat password">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-accent" style="width:100%;justify-content:center;padding:12px;font-size:.95rem;" id="regBtn" onclick="doRegister()">
+      <i class="fa-solid fa-user-plus"></i> Register Account
     </button>
-    <div style="text-align:center;margin-top:12px;font-size:.85rem;color:var(--muted);">
-      Already registered? <a href="#" onclick="showPage('loginPage')" style="color:var(--primary);font-weight:600;">Login</a>
+    <div style="text-align:center;margin-top:12px;font-size:.83rem;color:var(--muted);">
+      Already registered? <a href="#" onclick="showPage('loginPage')" style="color:var(--primary);font-weight:600;">Login here</a>
     </div>
   </div>
 </div>
@@ -546,26 +627,89 @@ function routeUser(user) {
   else                         { showPage('studentPage'); initStudent(); }
 }
 
+/* Branch options per course */
+const BRANCH_MAP = {
+  'B.Tech': ['CSE (Computer Science & Engineering)','ECE (Electronics & Communication)','ME (Mechanical Engineering)','Civil Engineering','EE (Electrical Engineering)','IT (Information Technology)','Chemical Engineering','Biotechnology','Aerospace Engineering'],
+  'B.E':    ['CSE','ECE','ME','Civil','EE','IT','Chemical','Biotechnology'],
+  'BCA':    ['BCA (General)','BCA with Data Science','BCA with Cybersecurity'],
+  'MCA':    ['MCA (General)','MCA with AI/ML','MCA with Cloud Computing'],
+  'MBA':    ['Finance','Marketing','Human Resource','Operations','Business Analytics','International Business'],
+  'B.Pharma':['B.Pharma (General)','Pharmaceutical Chemistry','Pharmacology'],
+  'M.Tech': ['CSE','ECE','ME','Civil','AI & Machine Learning','Data Science','VLSI Design'],
+  'B.Sc':   ['Physics','Chemistry','Mathematics','Biology','Computer Science','Statistics'],
+  'M.Sc':   ['Physics','Chemistry','Mathematics','Biology','Computer Science'],
+  'BBA':    ['BBA (General)','BBA Finance','BBA Marketing','BBA HR'],
+  'B.Com':  ['B.Com (General)','B.Com Hons','B.Com with CA'],
+  'LLB':    ['LLB (General)','LLB (Corporate Law)','LLB (Criminal Law)'],
+  'MBBS':   ['MBBS (General Medicine)'],
+};
+
+function updateBranches() {
+  const course = document.getElementById('regCourse').value;
+  const branchSel = document.getElementById('regBranch');
+  const branchGroup = document.getElementById('branchGroup');
+  const secSemGroup = document.getElementById('secSemGroup');
+
+  if (!course) {
+    branchGroup.style.display = 'none';
+    secSemGroup.style.display = 'none';
+    return;
+  }
+
+  const branches = BRANCH_MAP[course] || [];
+  branchSel.innerHTML = '<option value="">— Select Branch —</option>' +
+    branches.map(b => `<option value="${b}">${b}</option>`).join('');
+
+  branchGroup.style.display = 'block';
+  secSemGroup.style.display = 'grid';
+  secSemGroup.style.gridTemplateColumns = '1fr 1fr';
+  secSemGroup.style.gap = '12px';
+}
+
 async function doRegister() {
-  const name   = document.getElementById('regName').value.trim();
-  const enroll = document.getElementById('regEnroll').value.trim();
-  const email  = document.getElementById('regEmail').value.trim();
-  const dept   = document.getElementById('regDept').value;
-  const pass   = document.getElementById('regPass').value;
-  const pass2  = document.getElementById('regPass2').value;
-  if (!name||!enroll||!email||!pass) { toast('All fields required','warning'); return; }
-  if (pass !== pass2)                { toast('Passwords do not match','error'); return; }
-  if (pass.length < 6)               { toast('Password min 6 characters','warning'); return; }
+  const name    = document.getElementById('regName').value.trim();
+  const enroll  = document.getElementById('regEnroll').value.trim();
+  const email   = document.getElementById('regEmail').value.trim();
+  const course  = document.getElementById('regCourse').value;
+  const branch  = document.getElementById('regBranch').value;
+  const section = document.getElementById('regSection').value;
+  const sem     = document.getElementById('regSem').value;
+  const pass    = document.getElementById('regPass').value;
+  const pass2   = document.getElementById('regPass2').value;
+
+  if (!name)    { toast('Please enter your full name','warning'); return; }
+  if (!enroll)  { toast('Please enter your enrollment number','warning'); return; }
+  if (!email)   { toast('Please enter your email','warning'); return; }
+  if (!course)  { toast('Please select your course/program','warning'); return; }
+  if (!branch)  { toast('Please select your branch','warning'); return; }
+  if (!section) { toast('Please select your section','warning'); return; }
+  if (!sem)     { toast('Please select your semester','warning'); return; }
+  if (!pass)    { toast('Please set a password','warning'); return; }
+  if (pass !== pass2) { toast('Passwords do not match','error'); return; }
+  if (pass.length < 6){ toast('Password must be at least 6 characters','warning'); return; }
+
   const btn = document.getElementById('regBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Registering...';
   try {
-    await API.post('/auth/register', { full_name:name, inst_id:enroll, email, password:pass, department:dept, role:'student' });
-    toast('Registered! Your account is pending admin approval.','success');
+    const dept = `${course} - ${branch}`;
+    await API.post('/auth/register', {
+      full_name: name,
+      inst_id:   enroll,
+      email,
+      password:  pass,
+      role:      'student',
+      department: dept,
+      branch:    `${course} - ${branch}`,
+      section,
+      semester:  sem,
+    });
+    toast('✅ Registered successfully! Await admin approval before you can login.','success');
     showPage('loginPage');
   } catch(e) {
-    toast(e.message||'Registration failed','error');
+    toast(e.message || 'Registration failed','error');
   } finally {
-    btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-user-plus"></i> Register';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Register Account';
   }
 }
 
