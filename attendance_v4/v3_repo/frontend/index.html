@@ -560,8 +560,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 /* ═══════════════════════════ API CONFIG ═══════════════════════════ */
 const API = (() => {
   // Always use same origin — works locally AND on Render automatically
-  const base = `${window.location.protocol}//${window.location.host}/api`;
-
+ const base = `https://smart-attendance-api-2dol.onrender.com/api`;
   const token = () => localStorage.getItem('sas_token');
 
   const headers = (json = true) => {
@@ -652,11 +651,8 @@ async function doLogin() {
   try {
     const data = await API.post('/auth/login', { credential: id, password: pass });
     // Role check
-    if (data.user.role !== loginRole) {
-      toast(`This ID belongs to a ${data.user.role}, not a ${loginRole}. Please select the correct role tab.`, 'error');
-      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
-      return;
-    }
+    // Auto-set role from what backend returns (no need to pre-select tab)
+loginRole = data.user.role;
     localStorage.setItem('sas_token', data.access_token);
     localStorage.setItem('sas_user',  JSON.stringify(data.user));
     currentUser = data.user;
