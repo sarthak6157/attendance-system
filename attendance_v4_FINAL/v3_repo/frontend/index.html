@@ -1740,20 +1740,20 @@ async function renderFacDashboard(c) {
         : todaySlots.map(sl => {
             const liveSession = ss.find(s => s.status==='active' && s.timetable_id===sl.id);
             const doneToday   = ss.find(s => s.status==='closed' && s.timetable_id===sl.id && new Date(s.started_at).toDateString()===new Date().toDateString());
-            return \`<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);">
-              <div>
-                <div style="font-weight:600;">\${sl.course_name||'?'} <span class="badge bg-blue">Sec \${sl.section||'-'}</span></div>
-                <div style="font-size:.8rem;color:var(--muted);">\${sl.start_time} – \${sl.end_time} · \${sl.room||'No room'} · \${sl.branch||''}</div>
-              </div>
-              <div>
-                \${liveSession
-                  ? \`<span class="badge bg-green"><i class="fa-solid fa-circle fa-xs"></i> LIVE</span>\`
-                  : doneToday
-                    ? \`<span class="badge bg-gray"><i class="fa-solid fa-check"></i> Done today</span>\`
-                    : \`<button class="btn btn-success btn-sm" onclick="goLive(\${sl.id})"><i class="fa-solid fa-play"></i> Go Live</button>\`
-                }
-              </div>
-            </div>\`;
+           return `<div ...>
+  <div>
+    <div>${sl.course_name...}
+    <div>${sl.start_time...}
+  </div>
+  <div>
+    ${liveSession
+      ? `<span>LIVE</span>`
+      : doneToday
+        ? `<span>Done today</span>`
+        : `<button onclick="goLive(${sl.id})">Go Live</button>`
+    }
+  </div>
+</div>`;
           }).join('')
       }
     </div>
