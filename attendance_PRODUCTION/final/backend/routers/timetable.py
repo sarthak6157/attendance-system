@@ -62,15 +62,26 @@ def list_slots(
     current_user: User = Depends(get_current_user),
     db: DBSession = Depends(get_db),
 ):
+    from sqlalchemy import func
     q = db.query(TimetableSlot).filter(TimetableSlot.is_active == True)
     if current_user.role == UserRole.faculty:
         q = q.filter(TimetableSlot.faculty_id == current_user.id)
     elif faculty_id:
         q = q.filter(TimetableSlot.faculty_id == faculty_id)
-    if branch:
-        q = q.filter(TimetableSlot.branch == branch)
-    if section:
-        q = q.filter(TimetableSlot.section == section)
+
+    # For students: auto-inject their branch/section if not explicitly passed
+    if current_user.role == UserRole.student:
+        effective_branch  = branch  or current_user.branch  or current_user.department
+        effective_section = section or current_user.section
+    else:
+        effective_branch  = branch
+        effective_section = section
+
+    # Case-insensitive matching so "AI-ML-DL" == "ai-ml-dl" == "Ai-Ml-Dl"
+    if effective_branch:
+        q = q.filter(func.lower(TimetableSlot.branch) == effective_branch.strip().lower())
+    if effective_section:
+        q = q.filter(func.lower(TimetableSlot.section) == effective_section.strip().lower())
     slots = q.order_by(TimetableSlot.day_of_week, TimetableSlot.start_time).all()
     result = []
     for s in slots:
@@ -150,3 +161,22 @@ def go_live(
     )
     db.add(session); db.commit(); db.refresh(session)
     return {"session_id": session.id, "qr_token": session.qr_token, "message": "Session is now live!"}
+
+
+@router.get("/debug/student-match")
+def debug_student_match(
+    current_user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    """Returns the student's stored branch/section vs all distinct branch/section pairs in timetable.
+    Use this to diagnose why a student sees no slots."""
+    from sqlalchemy import func, distinct
+    all_branches = db.query(distinct(TimetableSlot.branch)).all()
+    all_sections = db.query(distinct(TimetableSlot.section)).all()
+    return {
+        "student_branch":  current_user.branch,
+        "student_department": current_user.department,
+        "student_section": current_user.section,
+        "timetable_branches": [r[0] for r in all_branches],
+        "timetable_sections": [r[0] for r in all_sections],
+    }
