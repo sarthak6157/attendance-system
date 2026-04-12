@@ -1,5 +1,5 @@
 """Timetable routes — admin creates slots, faculty goes live."""
-from datetime import datetime, timedelta
+from datetime import datetime
 import secrets
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -54,15 +54,13 @@ class GoLiveRequest(BaseModel):
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
-# ⚠️ IMPORTANT: /debug/student-match MUST be defined BEFORE /{slot_id}/go-live
-# Otherwise FastAPI matches "debug" as a slot_id integer and returns 404.
+# ⚠️ /debug/student-match MUST be before /{slot_id} routes to avoid 404
 
 @router.get("/debug/student-match")
 def debug_student_match(
     current_user: User = Depends(get_current_user),
     db: DBSession = Depends(get_db),
 ):
-    """Returns the student's stored branch/section vs all distinct branch/section pairs in timetable."""
     from sqlalchemy import distinct
     all_branches = db.query(distinct(TimetableSlot.branch)).all()
     all_sections = db.query(distinct(TimetableSlot.section)).all()
@@ -77,32 +75,45 @@ def debug_student_match(
 
 @router.get("", response_model=List[SlotOut])
 def list_slots(
-    branch:  Optional[str] = Query(None),
-    section: Optional[str] = Query(None),
+    branch:     Optional[str] = Query(None),
+    section:    Optional[str] = Query(None),
     faculty_id: Optional[int] = Query(None),
     current_user: User = Depends(get_current_user),
     db: DBSession = Depends(get_db),
 ):
-    from sqlalchemy import func
+    from sqlalchemy import func, or_
     q = db.query(TimetableSlot).filter(TimetableSlot.is_active == True)
+
     if current_user.role == UserRole.faculty:
         q = q.filter(TimetableSlot.faculty_id == current_user.id)
     elif faculty_id:
         q = q.filter(TimetableSlot.faculty_id == faculty_id)
 
-    # For students: auto-inject their branch/section if not explicitly passed
+    # For students: auto-inject their branch/section if not passed
     if current_user.role == UserRole.student:
-        effective_branch  = branch  or current_user.branch  or current_user.department
+        effective_branch  = branch  or current_user.branch or current_user.department
         effective_section = section or current_user.section
     else:
         effective_branch  = branch
         effective_section = section
 
-    # Case-insensitive matching so "AI-ML-DL" == "ai-ml-dl" == "Ai-Ml-Dl"
+    # Case-insensitive branch match
     if effective_branch:
         q = q.filter(func.lower(TimetableSlot.branch) == effective_branch.strip().lower())
+
+    # For students with sub-group (e.g. A1, A2):
+    # Show BOTH their sub-group slots (labs) AND parent section slots (theory)
+    # e.g. student in A1 sees section="A1" labs AND section="A" theory classes
     if effective_section:
-        q = q.filter(func.lower(TimetableSlot.section) == effective_section.strip().lower())
+        s = effective_section.strip().upper()
+        parent = s[0] if len(s) > 1 else None  # "A1" → "A", "B2" → "B"
+        if parent and current_user.role == UserRole.student:
+            q = q.filter(or_(
+                func.lower(TimetableSlot.section) == s.lower(),
+                func.lower(TimetableSlot.section) == parent.lower()
+            ))
+        else:
+            q = q.filter(func.lower(TimetableSlot.section) == s.lower())
 
     slots = q.order_by(TimetableSlot.day_of_week, TimetableSlot.start_time).all()
     result = []
