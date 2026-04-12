@@ -68,6 +68,7 @@ def debug_student_match(
         "student_branch":      current_user.branch,
         "student_department":  current_user.department,
         "student_section":     current_user.section,
+        "student_subsection":  current_user.course,
         "timetable_branches":  [r[0] for r in all_branches],
         "timetable_sections":  [r[0] for r in all_sections],
     }
@@ -91,29 +92,31 @@ def list_slots(
 
     # For students: auto-inject their branch/section if not passed
     if current_user.role == UserRole.student:
-        effective_branch  = branch  or current_user.branch or current_user.department
-        effective_section = section or current_user.section
+        effective_branch     = branch   or current_user.branch or current_user.department
+        effective_section    = section  or current_user.section   # e.g. "A"
+        effective_subsection = current_user.course                # e.g. "A1" or "A2"
     else:
-        effective_branch  = branch
-        effective_section = section
+        effective_branch     = branch
+        effective_section    = section
+        effective_subsection = None
 
     # Case-insensitive branch match
     if effective_branch:
         q = q.filter(func.lower(TimetableSlot.branch) == effective_branch.strip().lower())
 
-    # For students with sub-group (e.g. A1, A2):
-    # Show BOTH their sub-group slots (labs) AND parent section slots (theory)
-    # e.g. student in A1 sees section="A1" labs AND section="A" theory classes
+    # Section filter:
+    # Students see their main section (theory) AND their subsection (labs)
+    # e.g. section="A" + subsection="A1" → show slots where section IN ('A', 'A1')
     if effective_section:
-        s = effective_section.strip().upper()
-        parent = s[0] if len(s) > 1 else None  # "A1" → "A", "B2" → "B"
-        if parent and current_user.role == UserRole.student:
+        sec = effective_section.strip().upper()
+        if current_user.role == UserRole.student and effective_subsection:
+            subsec = effective_subsection.strip().upper()
             q = q.filter(or_(
-                func.lower(TimetableSlot.section) == s.lower(),
-                func.lower(TimetableSlot.section) == parent.lower()
+                func.lower(TimetableSlot.section) == sec.lower(),
+                func.lower(TimetableSlot.section) == subsec.lower()
             ))
         else:
-            q = q.filter(func.lower(TimetableSlot.section) == s.lower())
+            q = q.filter(func.lower(TimetableSlot.section) == sec.lower())
 
     slots = q.order_by(TimetableSlot.day_of_week, TimetableSlot.start_time).all()
     result = []
