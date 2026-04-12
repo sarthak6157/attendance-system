@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js" defer onerror="console.warn('face-api.js failed to load')"></script>
 <style>
 :root {
   --primary: #1a3c6e; --accent: #f08e1b; --accent2: #e63946;
@@ -2903,19 +2903,29 @@ let faceSetupStream = null;
 
 async function loadFaceApiModels() {
   if (faceApiReady) return;
-  try {
-    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
-    await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-      faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
-      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-    ]);
-    faceApiReady = true;
-    console.log('face-api models loaded');
-  } catch(e) {
-    console.error('Failed to load face-api models:', e);
-    throw e;
+  const URLS = [
+    'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights',
+    'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/weights',
+    'https://vladmandic.github.io/face-api/model',
+  ];
+  let lastErr = null;
+  for (const MODEL_URL of URLS) {
+    try {
+      console.log('Trying model URL:', MODEL_URL);
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+      ]);
+      faceApiReady = true;
+      console.log('face-api models loaded from:', MODEL_URL);
+      return;
+    } catch(e) {
+      console.warn('Failed with URL', MODEL_URL, e.message);
+      lastErr = e;
+    }
   }
+  throw new Error('All model CDNs failed. Please check your internet connection.');
 }
 
 async function initFaceSetup() {
@@ -2934,7 +2944,8 @@ async function initFaceSetup() {
     // Live face detection loop to give feedback
     faceSetupDetectionLoop();
   } catch(e) {
-    if (statusEl) statusEl.textContent = 'Error: ' + (e.message || 'Could not start camera');
+    if (statusEl) statusEl.innerHTML = 'Error loading face detection: ' + (e.message || 'Network error') 
+      + '<br><small>Check your internet connection and refresh the page.</small>';
     console.error(e);
   }
 }
@@ -2985,22 +2996,18 @@ async function captureRegistrationFace() {
     const face_descriptor = JSON.stringify(Array.from(detection.descriptor));
     if (status) status.textContent = 'Saving to server...';
     // Save to backend
-    const updated = await API.post(\`/users/\${currentUser.id}/register-face\`, { image_b64, face_descriptor });
+    const updated = await API.post('/users/' + currentUser.id + '/register-face', { image_b64, face_descriptor });
     // Update currentUser
     currentUser.face_registered = true;
     currentUser.face_embedding  = face_descriptor;
     localStorage.setItem('sas_user', JSON.stringify(currentUser));
     // Stop camera
     if (faceSetupStream) { faceSetupStream.getTracks().forEach(t=>t.stop()); faceSetupStream=null; }
-    if (result) result.innerHTML = \`
-      <div style="margin-top:12px;padding:16px;background:#d1fae5;border-radius:10px;color:#065f46;">
-        <div style="font-size:1.5rem;margin-bottom:6px;">✅</div>
-        <strong>Face registered successfully!</strong><br>
-        <span style="font-size:.85rem;">Your face will now be used to verify attendance.</span>
-        <button class="btn btn-accent" style="margin-top:12px;width:100%;" onclick="proceedToPortal()">
-          <i class="fa-solid fa-arrow-right"></i> Go to Student Portal
-        </button>
-      </div>\`;
+    if (result) result.innerHTML = '<div style="margin-top:12px;padding:16px;background:#d1fae5;border-radius:10px;color:#065f46;">'
+      + '<strong>&#10003; Face registered successfully!</strong><br>'
+      + '<span style="font-size:.85rem;">Your face will now be used to verify attendance.</span>'
+      + '<br><button class="btn btn-accent" style="margin-top:12px;width:100%;" onclick="proceedToPortal()">Go to Student Portal</button>'
+      + '</div>';
     if (btn) btn.style.display='none';
     toast('Face registered successfully!', 'success');
   } catch(e) {
