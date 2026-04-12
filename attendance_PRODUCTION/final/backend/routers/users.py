@@ -99,12 +99,13 @@ def register_face(
     user_id: int, payload: FaceRegisterRequest,
     current_user: User = Depends(get_current_user), db: Session = Depends(get_db),
 ):
-    """Store face image for a student. Student can register their own face."""
+    """Store face image + descriptor for a student. Student can register their own face."""
     if current_user.role != UserRole.admin and current_user.id != user_id:
         raise HTTPException(status_code=403, detail="Access denied.")
     user = db.query(User).filter(User.id == user_id).first()
     if not user: raise HTTPException(status_code=404, detail="User not found.")
     user.face_image_b64  = payload.image_b64
+    user.face_embedding  = payload.face_descriptor  # store 128-float JSON array
     user.face_registered = True
     user.updated_at      = datetime.utcnow()
     db.commit(); db.refresh(user)
