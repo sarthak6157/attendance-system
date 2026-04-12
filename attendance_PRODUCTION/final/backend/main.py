@@ -26,6 +26,25 @@ app.add_middleware(
     allow_credentials=False, allow_methods=["*"], allow_headers=["*"],
 )
 
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+
+class PermissiveCSPMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        # Allow loading face-api models from external CDNs
+        response.headers["Content-Security-Policy"] = (
+            "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; "
+            "script-src * 'unsafe-inline' 'unsafe-eval' blob:; "
+            "connect-src * data: blob:; "
+            "img-src * data: blob:; "
+            "font-src * data:; "
+            "style-src * 'unsafe-inline';"
+        )
+        return response
+
+app.add_middleware(PermissiveCSPMiddleware)
+
 app.include_router(auth.router,             prefix="/api/auth",       tags=["Auth"])
 app.include_router(users.router,            prefix="/api/users",      tags=["Users"])
 app.include_router(sessions.router,         prefix="/api/sessions",   tags=["Sessions"])
