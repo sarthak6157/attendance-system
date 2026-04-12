@@ -90,9 +90,13 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .form-select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 10px center;background-size:12px;}
 
 /* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:#00000066;z-index:300;align-items:center;justify-content:center;}
+.modal-overlay{display:none;position:fixed;inset:0;background:#00000066;z-index:300;align-items:flex-end;justify-content:center;padding:0;}
 .modal-overlay.show{display:flex;}
-.modal-box{background:#fff;border-radius:16px;padding:28px;max-width:520px;width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px #0003;}
+.modal-box{background:#fff;border-radius:16px 16px 0 0;padding:28px;width:100%;max-width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px #0003;}
+@media(min-width:600px){
+  .modal-overlay{align-items:center;padding:16px;}
+  .modal-box{border-radius:16px;max-width:520px;}
+}
 .modal-box h3{font-size:1.2rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
 .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
 
@@ -105,7 +109,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 @keyframes slideIn{from{transform:translateX(60px);opacity:0;}to{transform:translateX(0);opacity:1;}}
 
 /* LOGIN */
-#loginPage{background:linear-gradient(135deg,#0f1e3d 0%,#1a3c6e 50%,#0f2a52 100%);align-items:center;justify-content:center;}
+#loginPage{background:linear-gradient(135deg,#0f1e3d 0%,#1a3c6e 50%,#0f2a52 100%);align-items:center;justify-content:center;padding:16px;overflow-y:auto;}
 .login-card{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 80px #00000044;}
 .login-logo{text-align:center;margin-bottom:28px;}
 .login-logo .circle{width:64px;height:64px;background:var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 12px;color:#fff;}
@@ -153,11 +157,51 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 #loadingOverlay .big-spinner{width:50px;height:50px;border:4px solid #ffffff44;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
 
 @media(max-width:768px){
-  .sidebar{display:none;}
+  .sidebar{display:none;position:fixed;top:0;left:0;width:280px;height:100vh;z-index:500;transform:translateX(-100%);transition:transform .3s ease;}
+  .sidebar.mobile-open{display:flex!important;flex-direction:column;transform:translateX(0);}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:#00000066;z-index:499;}
+  .sidebar-overlay.show{display:block;}
   .form-row{grid-template-columns:1fr;}
-  .main-content{padding:16px;}
+  .main-content{padding:12px;}
   .stat-grid{grid-template-columns:1fr 1fr;}
+  .login-card{padding:24px 18px;margin:12px;}
+  .modal-box{padding:20px 16px;margin:8px;}
+  .navbar .brand span{display:none;}
+  .page-header{flex-direction:column;align-items:flex-start;}
+  .search-bar{flex-direction:column;}
+  .search-bar input{width:100%;}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .stat-val{font-size:1.4rem;}
+  .btn{padding:7px 12px;font-size:.82rem;}
+  .btn-sm{padding:4px 8px;font-size:.75rem;}
+  /* Bottom nav for mobile */
+  .mobile-bottom-nav{display:flex!important;}
+  .main-content{padding-bottom:70px;}
 }
+@media(min-width:769px){
+  .mobile-bottom-nav{display:none!important;}
+  .mobile-menu-btn{display:none!important;}
+  .sidebar-overlay{display:none!important;}
+}
+/* Mobile bottom navigation */
+.mobile-bottom-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;height:60px;
+  background:var(--primary);z-index:400;border-top:1px solid #ffffff22;
+  justify-content:space-around;align-items:center;
+}
+.mob-nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:#ffffffaa;font-size:.6rem;gap:3px;cursor:pointer;padding:6px 2px;
+  border-top:2px solid transparent;transition:.15s;text-decoration:none;
+}
+.mob-nav-item.active,.mob-nav-item:hover{color:#fff;border-top-color:var(--accent);}
+.mob-nav-item i{font-size:1.1rem;}
+/* Mobile menu button in navbar */
+.mobile-menu-btn{
+  background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;
+  padding:6px 8px;border-radius:6px;display:none;margin-right:4px;
+}
+@media(max-width:768px){.mobile-menu-btn{display:block!important;}}
 </style>
 </head>
 <body>
@@ -350,6 +394,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <!-- ═══════════════ ADMIN PAGE ═══════════════ -->
 <div id="adminPage" class="page">
   <div class="navbar">
+    <button class="mobile-menu-btn" onclick="toggleSidebar('adminSidebar')"><i class="fa-solid fa-bars"></i></button>
     <div class="brand"><i class="fa-solid fa-shield-halved"></i> Smart Attendance <span>ADMIN</span></div>
     <div class="navbar-right">
       <div class="user-chip">
@@ -365,7 +410,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
   </div>
   <div class="app-shell">
-    <div class="sidebar">
+    <div class="sidebar-overlay" id="adminOverlay" onclick="closeSidebar('adminSidebar')"></div>
+    <div class="sidebar" id="adminSidebar">
       <div class="user-info">
         <div class="name" id="adminSidebarName">System Admin</div>
         <div class="role-badge">Administrator</div>
@@ -387,11 +433,21 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
     <div class="main-content" id="adminContent"><div class="empty-state"><div class="big-spinner" style="margin:0 auto;"></div></div></div>
   </div>
+
+  <!-- Mobile Bottom Nav - Admin -->
+  <nav class="mobile-bottom-nav" id="adminBottomNav">
+    <a class="mob-nav-item active" onclick="adminNav('dashboard')" id="mb-adash"><i class="fa-solid fa-gauge"></i>Dashboard</a>
+    <a class="mob-nav-item" onclick="adminNav('users')" id="mb-ausers"><i class="fa-solid fa-users"></i>Users</a>
+    <a class="mob-nav-item" onclick="adminNav('pending')" id="mb-apending"><i class="fa-solid fa-clock"></i>Pending</a>
+    <a class="mob-nav-item" onclick="adminNav('reports')" id="mb-areports"><i class="fa-solid fa-chart-bar"></i>Reports</a>
+    <a class="mob-nav-item" onclick="adminNav('settings')" id="mb-asettings"><i class="fa-solid fa-gear"></i>Settings</a>
+  </nav>
 </div>
 
 <!-- ═══════════════ FACULTY PAGE ═══════════════ -->
 <div id="facultyPage" class="page">
   <div class="navbar">
+    <button class="mobile-menu-btn" onclick="toggleSidebar('facSidebar')"><i class="fa-solid fa-bars"></i></button>
     <div class="brand"><i class="fa-solid fa-chalkboard-user"></i> Smart Attendance <span>FACULTY</span></div>
     <div class="navbar-right">
       <div class="user-chip">
@@ -406,7 +462,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
   </div>
   <div class="app-shell">
-    <div class="sidebar">
+    <div class="sidebar-overlay" id="facOverlay" onclick="closeSidebar('facSidebar')"></div>
+    <div class="sidebar" id="facSidebar">
       <div class="user-info">
         <div class="name" id="facSidebarName">Faculty</div>
         <div class="role-badge">Faculty Member</div>
@@ -424,11 +481,21 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
     <div class="main-content" id="facContent"></div>
   </div>
+
+  <!-- Mobile Bottom Nav - Faculty -->
+  <nav class="mobile-bottom-nav" id="facBottomNav">
+    <a class="mob-nav-item active" onclick="facNav('dashboard')" id="mb-fdash"><i class="fa-solid fa-gauge"></i>Dashboard</a>
+    <a class="mob-nav-item" onclick="facNav('sessions')" id="mb-fsessions"><i class="fa-solid fa-calendar-check"></i>Sessions</a>
+    <a class="mob-nav-item" onclick="facNav('timetable')" id="mb-ftimetable"><i class="fa-solid fa-calendar-days"></i>Timetable</a>
+    <a class="mob-nav-item" onclick="facNav('attendance')" id="mb-fattendance"><i class="fa-solid fa-clipboard-list"></i>Attendance</a>
+    <a class="mob-nav-item" onclick="facNav('profile')" id="mb-fprofile"><i class="fa-solid fa-user"></i>Profile</a>
+  </nav>
 </div>
 
 <!-- ═══════════════ STUDENT PAGE ═══════════════ -->
 <div id="studentPage" class="page">
   <div class="navbar">
+    <button class="mobile-menu-btn" onclick="toggleSidebar('stuSidebar')"><i class="fa-solid fa-bars"></i></button>
     <div class="brand"><i class="fa-solid fa-graduation-cap"></i> Smart Attendance <span>STUDENT</span></div>
     <div class="navbar-right">
       <button class="nav-btn" onclick="stuNav('scan')"><i class="fa-solid fa-qrcode"></i> Scan QR</button>
@@ -444,7 +511,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
   </div>
   <div class="app-shell">
-    <div class="sidebar">
+    <div class="sidebar-overlay" id="stuOverlay" onclick="closeSidebar('stuSidebar')"></div>
+    <div class="sidebar" id="stuSidebar">
       <div class="user-info">
         <div class="name" id="stuSidebarName">Student</div>
         <div class="role-badge">Student</div>
@@ -699,8 +767,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <script>
 /* ═══════════════════════════ API CONFIG ═══════════════════════════ */
 const API = (() => {
-  // Always use same origin — works locally AND on Render automatically
-  const base = `${window.location.protocol}//${window.location.host}/api`;
+  // Backend API URL
+  const base = `https://smart-attendance-api-2dol.onrender.com/api`;
 
   const token = () => localStorage.getItem('sas_token');
 
@@ -791,12 +859,8 @@ async function doLogin() {
   btn.innerHTML = '<span class="spinner"></span> Logging in...';
   try {
     const data = await API.post('/auth/login', { credential: id, password: pass });
-    // Role check
-    if (data.user.role !== loginRole) {
-      toast(`This ID belongs to a ${data.user.role}, not a ${loginRole}. Please select the correct role tab.`, 'error');
-      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
-      return;
-    }
+    // Auto-set role from backend response (no need to pre-select tab)
+    loginRole = data.user.role;
     localStorage.setItem('sas_token', data.access_token);
     localStorage.setItem('sas_user',  JSON.stringify(data.user));
     currentUser = data.user;
@@ -3022,6 +3086,56 @@ function proceedToPortal() {
   showPage('studentPage');
   initStudent();
 }
+
+
+/* ═══════════════════════════ MOBILE SIDEBAR ═══════════════════════════ */
+function toggleSidebar(sidebarId) {
+  const sidebar = document.getElementById(sidebarId);
+  const overlayMap = { adminSidebar:'adminOverlay', facSidebar:'facOverlay', stuSidebar:'stuOverlay' };
+  const overlay = document.getElementById(overlayMap[sidebarId]);
+  const isOpen = sidebar.classList.contains('mobile-open');
+  if (isOpen) {
+    sidebar.classList.remove('mobile-open');
+    if (overlay) overlay.classList.remove('show');
+  } else {
+    sidebar.classList.add('mobile-open');
+    if (overlay) overlay.classList.add('show');
+  }
+}
+
+function closeSidebar(sidebarId) {
+  const sidebar = document.getElementById(sidebarId);
+  const overlayMap = { adminSidebar:'adminOverlay', facSidebar:'facOverlay', stuSidebar:'stuOverlay' };
+  const overlay = document.getElementById(overlayMap[sidebarId]);
+  sidebar.classList.remove('mobile-open');
+  if (overlay) overlay.classList.remove('show');
+}
+
+// Close sidebar on nav click (mobile)
+function adminNavMobile(section) { closeSidebar('adminSidebar'); adminNav(section); }
+function facNavMobile(section)   { closeSidebar('facSidebar');   facNav(section); }
+function stuNavMobile(section)   { closeSidebar('stuSidebar');   stuNav(section); }
+
+// Wrap table elements not already wrapped
+function wrapTables(container) {
+  if (!container) return;
+  container.querySelectorAll('table.tbl').forEach(t => {
+    if (!t.parentElement.classList.contains('tbl-wrap')) {
+      const wrap = document.createElement('div');
+      wrap.className = 'tbl-wrap';
+      t.parentNode.insertBefore(wrap, t);
+      wrap.appendChild(t);
+    }
+  });
+}
+
+// Observe adminContent/facContent/stuContent for table additions
+['adminContent','facContent','stuContent'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const obs = new MutationObserver(() => wrapTables(el));
+  obs.observe(el, { childList: true, subtree: true });
+});
 
 // Pre-load face-api models in background after page load
 window.addEventListener('load', () => {
