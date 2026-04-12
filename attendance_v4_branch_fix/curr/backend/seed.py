@@ -46,10 +46,7 @@ def main():
         db.rollback()
 
     # ── 3. Demo Faculty ──
-    faculty_data = [
-        ("Dr. Rajesh Kumar",   "FAC001", "rajesh@tmu.ac.in",  "B.Tech CSE"),
-        ("Prof. Meena Sharma", "FAC002", "meena@tmu.ac.in",   "B.Tech ECE"),
-    ]
+   
     for name, fid, email, dept in faculty_data:
         try:
             if not db.query(User).filter(User.inst_id == fid).first():
@@ -66,13 +63,7 @@ def main():
             db.rollback()
 
     # ── 4. Demo Students ──
-    student_data = [
-        ("Arjun Singh",  "STU001", "arjun@student.tmu.ac.in",  "B.Tech CSE"),
-        ("Priya Gupta",  "STU002", "priya@student.tmu.ac.in",  "B.Tech CSE"),
-        ("Ravi Verma",   "STU003", "ravi@student.tmu.ac.in",   "B.Tech ECE"),
-        ("Sneha Yadav",  "STU004", "sneha@student.tmu.ac.in",  "B.Tech ECE"),
-        ("Amit Sharma",  "STU005", "amit@student.tmu.ac.in",   "BCA"),
-    ]
+   
     for name, sid, email, dept in student_data:
         try:
             if not db.query(User).filter(User.inst_id == sid).first():
@@ -89,13 +80,7 @@ def main():
             db.rollback()
 
     # ── 5. Demo Courses ──
-    course_data = [
-        ("CS301", "Data Structures & Algorithms", "B.Tech CSE", 4),
-        ("CS302", "Operating Systems",             "B.Tech CSE", 3),
-        ("CS303", "Database Management Systems",   "B.Tech CSE", 3),
-        ("EC301", "Digital Electronics",           "B.Tech ECE", 4),
-        ("BCA201","Web Development",               "BCA",        3),
-    ]
+    
     for code, name, dept, credits in course_data:
         try:
             if not db.query(Course).filter(Course.code == code).first():
