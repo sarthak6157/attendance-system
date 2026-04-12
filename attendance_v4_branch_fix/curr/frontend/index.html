@@ -515,11 +515,25 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     <!-- Faculty/Admin fields -->
     <div id="mu_staff_fields" style="display:none;">
       <div class="form-group">
-        <label class="form-label">Department</label>
+        <label class="form-label">Course / Program <small style="color:var(--muted);font-weight:400;">(which program does this faculty teach)</small></label>
         <select class="form-control form-select" id="mu_dept">
-          <option>B.Tech CSE</option><option>B.Tech ECE</option><option>B.Tech ME</option>
-          <option>BCA</option><option>MCA</option><option>MBA</option><option>B.Pharma</option><option>Administration</option>
+          <option value="">— Select Program —</option>
+          <option value="B.Tech">B.Tech (Bachelor of Technology)</option>
+          <option value="B.E">B.E (Bachelor of Engineering)</option>
+          <option value="BCA">BCA (Bachelor of Computer Applications)</option>
+          <option value="MCA">MCA (Master of Computer Applications)</option>
+          <option value="MBA">MBA (Master of Business Administration)</option>
+          <option value="B.Pharma">B.Pharma (Bachelor of Pharmacy)</option>
+          <option value="M.Tech">M.Tech (Master of Technology)</option>
+          <option value="B.Sc">B.Sc (Bachelor of Science)</option>
+          <option value="M.Sc">M.Sc (Master of Science)</option>
+          <option value="BBA">BBA (Bachelor of Business Administration)</option>
+          <option value="B.Com">B.Com (Bachelor of Commerce)</option>
+          <option value="LLB">LLB (Bachelor of Laws)</option>
+          <option value="MBBS">MBBS (Bachelor of Medicine)</option>
+          <option value="Administration">Administration</option>
         </select>
+        <small style="color:var(--muted);font-size:.73rem;">Faculty can teach across multiple branches of the same program</small>
       </div>
     </div>
     <div class="form-group">
