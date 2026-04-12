@@ -54,6 +54,27 @@ class GoLiveRequest(BaseModel):
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
+# ⚠️ IMPORTANT: /debug/student-match MUST be defined BEFORE /{slot_id}/go-live
+# Otherwise FastAPI matches "debug" as a slot_id integer and returns 404.
+
+@router.get("/debug/student-match")
+def debug_student_match(
+    current_user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    """Returns the student's stored branch/section vs all distinct branch/section pairs in timetable."""
+    from sqlalchemy import distinct
+    all_branches = db.query(distinct(TimetableSlot.branch)).all()
+    all_sections = db.query(distinct(TimetableSlot.section)).all()
+    return {
+        "student_branch":      current_user.branch,
+        "student_department":  current_user.department,
+        "student_section":     current_user.section,
+        "timetable_branches":  [r[0] for r in all_branches],
+        "timetable_sections":  [r[0] for r in all_sections],
+    }
+
+
 @router.get("", response_model=List[SlotOut])
 def list_slots(
     branch:  Optional[str] = Query(None),
@@ -82,6 +103,7 @@ def list_slots(
         q = q.filter(func.lower(TimetableSlot.branch) == effective_branch.strip().lower())
     if effective_section:
         q = q.filter(func.lower(TimetableSlot.section) == effective_section.strip().lower())
+
     slots = q.order_by(TimetableSlot.day_of_week, TimetableSlot.start_time).all()
     result = []
     for s in slots:
@@ -130,7 +152,6 @@ def go_live(
     if not slot: raise HTTPException(status_code=404, detail="Timetable slot not found.")
     if current_user.role != UserRole.admin and slot.faculty_id != current_user.id:
         raise HTTPException(status_code=403, detail="This slot belongs to another faculty.")
-    # Check if a session from this slot is already active today
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     existing = db.query(Session).filter(
         Session.timetable_id == slot_id,
@@ -161,22 +182,3 @@ def go_live(
     )
     db.add(session); db.commit(); db.refresh(session)
     return {"session_id": session.id, "qr_token": session.qr_token, "message": "Session is now live!"}
-
-
-@router.get("/debug/student-match")
-def debug_student_match(
-    current_user: User = Depends(get_current_user),
-    db: DBSession = Depends(get_db),
-):
-    """Returns the student's stored branch/section vs all distinct branch/section pairs in timetable.
-    Use this to diagnose why a student sees no slots."""
-    from sqlalchemy import func, distinct
-    all_branches = db.query(distinct(TimetableSlot.branch)).all()
-    all_sections = db.query(distinct(TimetableSlot.section)).all()
-    return {
-        "student_branch":  current_user.branch,
-        "student_department": current_user.department,
-        "student_section": current_user.section,
-        "timetable_branches": [r[0] for r in all_branches],
-        "timetable_sections": [r[0] for r in all_sections],
-    }
