@@ -43,7 +43,8 @@ class UserStatusUpdate(BaseModel):
     status: UserStatus
 
 class FaceRegisterRequest(BaseModel):
-    image_b64: str          # base64 encoded face image from camera
+    image_b64:       str            # base64 encoded face image from camera
+    face_descriptor: Optional[str] = None  # JSON array of 128 floats from face-api.js
 
 class UserOut(BaseModel):
     id: int
@@ -57,6 +58,7 @@ class UserOut(BaseModel):
     section: Optional[str]
     semester: Optional[str]
     face_registered: bool = False
+    face_embedding:  Optional[str] = None   # 128-float JSON array for client-side matching
     created_at: datetime
     last_login: Optional[datetime]
     class Config:
