@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
 :root {
   --primary: #1a3c6e; --accent: #f08e1b; --accent2: #e63946;
@@ -162,6 +163,26 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <body>
 
 <div id="toast"></div>
+
+<!-- ── Face Registration Page (shown on first student login) ── -->
+<div id="faceSetupPage" class="page" style="background:linear-gradient(135deg,#0f1e3d,#1a3c6e);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--card);border-radius:18px;padding:32px 28px;max-width:460px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.3);text-align:center;">
+    <div style="font-size:2.5rem;margin-bottom:8px;">📸</div>
+    <h2 style="margin-bottom:4px;font-size:1.4rem;">Face Registration Required</h2>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:20px;">
+      One-time setup. Your face will be verified during every attendance scan to prevent proxy.
+    </p>
+    <div id="faceSetupStatus" style="margin-bottom:12px;font-size:.85rem;color:var(--accent);font-weight:600;min-height:20px;">Loading face detection models...</div>
+    <div class="camera-box" style="margin:0 auto 16px;position:relative;width:100%;max-width:320px;height:240px;background:#000;border-radius:10px;overflow:hidden;">
+      <video id="faceSetupVideo" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+      <canvas id="faceSetupCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+    </div>
+    <button id="faceSetupBtn" class="btn btn-accent" onclick="captureRegistrationFace()" disabled style="width:100%;margin-bottom:10px;">
+      <i class="fa-solid fa-camera"></i> Capture My Face
+    </button>
+    <div id="faceSetupResult"></div>
+  </div>
+</div>
 
 <!-- Loading Overlay -->
 <div id="loadingOverlay" style="display:none;">
@@ -791,7 +812,16 @@ async function doLogin() {
 function routeUser(user) {
   if (user.role === 'admin')   { showPage('adminPage');   initAdmin(); }
   else if (user.role==='faculty') { showPage('facultyPage'); initFaculty(); }
-  else                         { showPage('studentPage'); initStudent(); }
+  else {
+    // First login: student must register face before accessing portal
+    if (!user.face_registered) {
+      showPage('faceSetupPage');
+      initFaceSetup();
+    } else {
+      showPage('studentPage');
+      initStudent();
+    }
+  }
 }
 
 /* Branch options per course */
@@ -2632,16 +2662,57 @@ function startCam() {
   });
 }
 
-function captureFace() {
+async function captureFace() {
   const btn = document.getElementById('captureBtn');
   if (btn) { btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Verifying face...'; }
-  setTimeout(async () => {
+  try {
+    // Ensure face-api models are loaded
+    if (!faceApiReady) {
+      toast('Face detection not ready yet, please wait...', 'warning');
+      if (btn) { btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-circle-dot"></i> Capture & Verify'; }
+      return;
+    }
+    // Check stored descriptor exists
+    if (!currentUser.face_embedding) {
+      toast('No registered face found. Please contact admin.', 'error');
+      if (btn) { btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-circle-dot"></i> Capture & Verify'; }
+      return;
+    }
+    const video = document.getElementById('faceCam');
+    if (!video) { throw new Error('Camera not active'); }
+    // Detect face in live video
+    const detection = await faceapi
+      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+    if (!detection) {
+      toast('No face detected. Please look at the camera and try again.', 'error');
+      if (btn) { btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-circle-dot"></i> Capture & Verify'; }
+      return;
+    }
+    // Compare with stored descriptor
+    const storedDescriptor = new Float32Array(JSON.parse(currentUser.face_embedding));
+    const liveDescriptor   = detection.descriptor;
+    const distance   = faceapi.euclideanDistance(storedDescriptor, liveDescriptor);
+    const similarity = Math.max(0, (1 - distance)) * 100;
+    console.log(`Face similarity: ${similarity.toFixed(1)}% (distance: ${distance.toFixed(3)})`);
+    if (similarity < 60) {
+      if (camStream) { camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+      toast(`Face verification failed (${similarity.toFixed(0)}% match). Proxy attendance blocked!`, 'error');
+      if (btn) { btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-circle-dot"></i> Capture & Verify'; }
+      return;
+    }
+    // Passed!
     if (camStream) { camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
     stuScanState.faceDone = true;
     markStep(3);
-    toast('Face verified!','success');
+    toast(`✅ Face verified! (${similarity.toFixed(0)}% match)`,'success');
     await doMarkAttendance();
-  }, 2000);
+  } catch(e) {
+    console.error('Face verification error:', e);
+    toast('Face verification error: ' + (e.message||'Unknown error'), 'error');
+    if (btn) { btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-circle-dot"></i> Capture & Verify'; }
+  }
 }
 
 function skipFace() {
@@ -2825,6 +2896,131 @@ window.addEventListener('DOMContentLoaded', () => {
     } catch { showPage('loginPage'); }
   }
 });
+
+// ── Face API Global State ─────────────────────────────────────────────────
+let faceApiReady = false;
+let faceSetupStream = null;
+
+async function loadFaceApiModels() {
+  if (faceApiReady) return;
+  try {
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+    ]);
+    faceApiReady = true;
+    console.log('face-api models loaded');
+  } catch(e) {
+    console.error('Failed to load face-api models:', e);
+    throw e;
+  }
+}
+
+async function initFaceSetup() {
+  const statusEl = document.getElementById('faceSetupStatus');
+  const btn      = document.getElementById('faceSetupBtn');
+  try {
+    if (statusEl) statusEl.textContent = 'Loading face detection models...';
+    await loadFaceApiModels();
+    if (statusEl) statusEl.textContent = 'Models ready. Starting camera...';
+    // Start camera
+    faceSetupStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width:320, height:240 } });
+    const video = document.getElementById('faceSetupVideo');
+    if (video) { video.srcObject = faceSetupStream; await video.play(); }
+    if (statusEl) statusEl.textContent = 'Camera ready. Position your face clearly and click Capture.';
+    if (btn) btn.disabled = false;
+    // Live face detection loop to give feedback
+    faceSetupDetectionLoop();
+  } catch(e) {
+    if (statusEl) statusEl.textContent = 'Error: ' + (e.message || 'Could not start camera');
+    console.error(e);
+  }
+}
+
+async function faceSetupDetectionLoop() {
+  const video  = document.getElementById('faceSetupVideo');
+  const status = document.getElementById('faceSetupStatus');
+  const btn    = document.getElementById('faceSetupBtn');
+  if (!video || !faceSetupStream) return;
+  const detection = await faceapi
+    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+    .withFaceLandmarks();
+  if (detection) {
+    if (status) status.innerHTML = '<span style="color:var(--success)">✅ Face detected — ready to capture!</span>';
+    if (btn) btn.disabled = false;
+  } else {
+    if (status) status.textContent = '👤 No face detected — look directly at camera';
+  }
+  if (document.getElementById('faceSetupPage')?.classList.contains('active')) {
+    setTimeout(faceSetupDetectionLoop, 800);
+  }
+}
+
+async function captureRegistrationFace() {
+  const btn    = document.getElementById('faceSetupBtn');
+  const result = document.getElementById('faceSetupResult');
+  const status = document.getElementById('faceSetupStatus');
+  if (btn) { btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Capturing...'; }
+  try {
+    const video = document.getElementById('faceSetupVideo');
+    if (!video) throw new Error('Camera not active');
+    // Detect and get descriptor
+    const detection = await faceapi
+      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+    if (!detection) {
+      toast('No face detected. Please look at the camera.', 'error');
+      if (btn) { btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-camera"></i> Capture My Face'; }
+      return;
+    }
+    // Capture image as base64
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 320;
+    canvas.height = video.videoHeight || 240;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const image_b64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+    const face_descriptor = JSON.stringify(Array.from(detection.descriptor));
+    if (status) status.textContent = 'Saving to server...';
+    // Save to backend
+    const updated = await API.post(\`/users/\${currentUser.id}/register-face\`, { image_b64, face_descriptor });
+    // Update currentUser
+    currentUser.face_registered = true;
+    currentUser.face_embedding  = face_descriptor;
+    localStorage.setItem('sas_user', JSON.stringify(currentUser));
+    // Stop camera
+    if (faceSetupStream) { faceSetupStream.getTracks().forEach(t=>t.stop()); faceSetupStream=null; }
+    if (result) result.innerHTML = \`
+      <div style="margin-top:12px;padding:16px;background:#d1fae5;border-radius:10px;color:#065f46;">
+        <div style="font-size:1.5rem;margin-bottom:6px;">✅</div>
+        <strong>Face registered successfully!</strong><br>
+        <span style="font-size:.85rem;">Your face will now be used to verify attendance.</span>
+        <button class="btn btn-accent" style="margin-top:12px;width:100%;" onclick="proceedToPortal()">
+          <i class="fa-solid fa-arrow-right"></i> Go to Student Portal
+        </button>
+      </div>\`;
+    if (btn) btn.style.display='none';
+    toast('Face registered successfully!', 'success');
+  } catch(e) {
+    console.error('Face registration error:', e);
+    toast('Error: ' + (e.message || 'Failed to register face'), 'error');
+    if (btn) { btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-camera"></i> Capture My Face'; }
+  }
+}
+
+function proceedToPortal() {
+  if (faceSetupStream) { faceSetupStream.getTracks().forEach(t=>t.stop()); faceSetupStream=null; }
+  showPage('studentPage');
+  initStudent();
+}
+
+// Pre-load face-api models in background after page load
+window.addEventListener('load', () => {
+  setTimeout(() => loadFaceApiModels().catch(()=>{}), 3000);
+});
+
 </script>
 </body>
 </html>
