@@ -2548,7 +2548,7 @@ async function renderFacTimetable(c) {
               if (liveSession) {
                 actionHtml =
                   '<span class="badge bg-green"><i class="fa-solid fa-circle fa-xs"></i> LIVE</span> ' +
-                  '<button class="btn btn-primary btn-sm" onclick="facNav('qr')"><i class="fa-solid fa-qrcode"></i> QR</button> ' +
+                  '<button class="btn btn-primary btn-sm" onclick="facNav(\'qr\')"><i class="fa-solid fa-qrcode"></i> QR</button> ' +
                   '<button class="btn btn-danger btn-sm" onclick="endFacSession('+liveSession.id+')"><i class="fa-solid fa-stop"></i> End</button>';
               } else if (doneToday) {
                 actionHtml = '<span class="badge bg-gray"><i class="fa-solid fa-check"></i> Done today</span>';
