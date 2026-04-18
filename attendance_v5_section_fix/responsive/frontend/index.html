@@ -1363,8 +1363,10 @@ function toast(msg, type = 'info') {
 
 function loading(show, msg = 'Loading...') {
   const el = document.getElementById('loadingOverlay');
+  if (!el) return;
   el.style.display = show ? 'flex' : 'none';
-  document.getElementById('loadingMsg').textContent = msg;
+  const msgEl = document.getElementById('loadMsg') || document.getElementById('loadingMsg');
+  if (msgEl) msgEl.textContent = msg;
 }
 
 function fmt(iso)   { return new Date(iso).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}); }
@@ -2491,109 +2493,81 @@ async function renderFacTimetable(c) {
     API.get('/timetable').catch(()=>[]),
     API.get('/sessions').catch(()=>({sessions:[]})),
   ]);
-  const slotList = Array.isArray(slots) ? slots : [];
-  const ss       = sessions.sessions || [];
-  const now      = new Date();
+  const slotList  = Array.isArray(slots) ? slots : [];
+  const ss        = sessions.sessions || [];
+  const now       = new Date();
   const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][now.getDay()];
+
+  function isWithinTimeWindow(sl) {
+    const [sh, sm] = sl.start_time.split(':').map(Number);
+    const [eh, em] = sl.end_time.split(':').map(Number);
+    const nowM = now.getHours()*60 + now.getMinutes();
+    return nowM >= (sh*60+sm-5) && nowM <= (eh*60+em);
+  }
+  function timeToStart(sl) {
+    const [sh, sm] = sl.start_time.split(':').map(Number);
+    const diff = (sh*60+sm) - (now.getHours()*60+now.getMinutes());
+    if (diff <= 0) return null;
+    return diff < 60 ? diff+'min' : Math.floor(diff/60)+'h '+(diff%60)+'m';
+  }
 
   const grouped = {};
   DAYS.forEach(d => grouped[d] = slotList.filter(s => s.day_of_week === d));
 
-  // Helper: check if current time is within slot time window (with 5-min early buffer)
-  function isWithinWindow(sl) {
-    const [sh, sm] = sl.start_time.split(':').map(Number);
-    const [eh, em] = sl.end_time.split(':').map(Number);
-    const nowMins  = now.getHours() * 60 + now.getMinutes();
-    const startMins= sh * 60 + sm - 5;   // 5 min early allowed
-    const endMins  = eh * 60 + em;
-    return nowMins >= startMins && nowMins <= endMins;
-  }
+  let html = '<div class="page-header"><h2><i class="fa-solid fa-calendar-days" style="color:var(--accent);"></i> My Timetable</h2></div>';
+  html += '<div class="alert alert-info"><i class="fa-solid fa-circle-info"></i> <strong>Go Live</strong> activates 5 min before class and locks after class ends.</div>';
 
-  function timeUntilStart(sl) {
-    const [sh, sm] = sl.start_time.split(':').map(Number);
-    const nowMins  = now.getHours() * 60 + now.getMinutes();
-    const startMins= sh * 60 + sm;
-    const diff = startMins - nowMins;
-    if (diff <= 0) return null;
-    if (diff < 60) return diff + ' min';
-    return Math.floor(diff/60) + 'h ' + (diff%60) + 'm';
-  }
+  DAYS.forEach(function(day) {
+    const daySlots = grouped[day] || [];
+    const isToday  = day === todayName;
+    html += '<div class="card" style="margin-bottom:14px;' + (isToday ? 'border:2px solid var(--accent);' : '') + '">';
+    html += '<div class="section-title" style="' + (isToday ? 'color:var(--accent);' : '') + '">';
+    html += '<i class="fa-solid fa-calendar-day"></i> ' + day;
+    if (isToday) html += ' <span class="badge bg-orange" style="margin-left:8px;">TODAY</span>';
+    html += ' <span style="font-size:.72rem;color:var(--muted);font-weight:400;margin-left:8px;">' + daySlots.length + ' class' + (daySlots.length!==1?'es':'') + '</span>';
+    html += '</div>';
 
-  c.innerHTML = `
-    <div class="page-header">
-      <h2><i class="fa-solid fa-calendar-days" style="color:var(--accent);"></i> My Timetable</h2>
-    </div>
-    <div class="alert alert-info">
-      <i class="fa-solid fa-circle-info"></i>
-      <strong>Go Live</strong> button activates 5 minutes before class starts and locks when class time ends.
-    </div>
-    ${DAYS.map(day => {
-      const daySlots = grouped[day] || [];
-      const isToday  = day === todayName;
-      return '<div class="card" style="margin-bottom:14px;' + (isToday?'border:2px solid var(--accent);':'') + '">' +
-        '<div class="section-title" style="' + (isToday?'color:var(--accent);':'') + '">' +
-          '<i class="fa-solid fa-calendar-day"></i> ' + day +
-          (isToday ? ' <span class="badge bg-orange" style="margin-left:8px;">TODAY</span>' : '') +
-          ' <span style="font-size:.72rem;color:var(--muted);font-weight:400;margin-left:8px;">' + daySlots.length + ' class' + (daySlots.length!==1?'es':'') + '</span>' +
-        '</div>' +
-        (!daySlots.length
-          ? '<div style="color:var(--muted);font-size:.85rem;">No classes scheduled</div>'
-          : daySlots.map(sl => {
-              const liveSession = ss.find(s => s.status==='active' && s.timetable_id===sl.id);
-              const doneToday   = isToday && ss.find(s => s.status==='closed' && s.timetable_id===sl.id && new Date(s.started_at).toDateString()===now.toDateString());
-              const inWindow    = isToday && isWithinWindow(sl);
-              const until       = isToday && !inWindow ? timeUntilStart(sl) : null;
+    if (!daySlots.length) {
+      html += '<div style="color:var(--muted);font-size:.85rem;padding:8px 0;">No classes scheduled</div>';
+    } else {
+      daySlots.forEach(function(sl) {
+        const liveSession = ss.find(function(s){ return s.status==='active' && s.timetable_id===sl.id; });
+        const doneToday   = isToday && ss.find(function(s){ return s.status==='closed' && s.timetable_id===sl.id && new Date(s.started_at).toDateString()===now.toDateString(); });
+        const inWindow    = isToday && isWithinTimeWindow(sl);
+        const until       = isToday && !inWindow ? timeToStart(sl) : null;
 
-              let actionHtml = '';
-              if (liveSession) {
-                actionHtml =
-                  '<span class="badge bg-green"><i class="fa-solid fa-circle fa-xs"></i> LIVE</span> ' +
-                  '<button class="btn btn-primary btn-sm" onclick="facNav(\'qr\')"><i class="fa-solid fa-qrcode"></i> QR</button> ' +
-                  '<button class="btn btn-danger btn-sm" onclick="endFacSession('+liveSession.id+')"><i class="fa-solid fa-stop"></i> End</button>';
-              } else if (doneToday) {
-                actionHtml = '<span class="badge bg-gray"><i class="fa-solid fa-check"></i> Done today</span>';
-              } else if (!isToday) {
-                actionHtml = '<span style="color:var(--muted);font-size:.8rem;">Not today</span>';
-              } else if (inWindow) {
-                // ✅ Within time window — show Go Live
-                actionHtml = '<button class="btn btn-success btn-sm" onclick="goLive('+sl.id+')"><i class="fa-solid fa-play"></i> Go Live</button>';
-              } else if (until) {
-                // ⏰ Class hasn't started yet — show countdown
-                actionHtml = '<span class="badge bg-orange"><i class="fa-solid fa-clock"></i> Starts in ' + until + '</span>';
-              } else {
-                // ⛔ Class time passed — locked
-                actionHtml = '<span class="badge bg-gray"><i class="fa-solid fa-lock"></i> Time over</span>';
-              }
+        let actionHtml = '';
+        if (liveSession) {
+          actionHtml  = '<span class="badge bg-green"><i class="fa-solid fa-circle fa-xs"></i> LIVE</span> ';
+          actionHtml += '<button class="btn btn-primary btn-sm" onclick="facNav(\'qr\')"><i class="fa-solid fa-qrcode"></i> QR</button> ';
+          actionHtml += '<button class="btn btn-danger btn-sm" onclick="endFacSession(' + liveSession.id + ')"><i class="fa-solid fa-stop"></i> End</button>';
+        } else if (doneToday) {
+          actionHtml = '<span class="badge bg-gray"><i class="fa-solid fa-check"></i> Done today</span>';
+        } else if (!isToday) {
+          actionHtml = '<span style="color:var(--muted);font-size:.8rem;">Not today</span>';
+        } else if (inWindow) {
+          actionHtml = '<button class="btn btn-success btn-sm" onclick="goLive(' + sl.id + ')"><i class="fa-solid fa-play"></i> Go Live</button>';
+        } else if (until) {
+          actionHtml = '<span class="badge bg-orange"><i class="fa-solid fa-clock"></i> Starts in ' + until + '</span>';
+        } else {
+          actionHtml = '<span class="badge bg-gray"><i class="fa-solid fa-lock"></i> Time over</span>';
+        }
 
-              return '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);">' +
-                '<div>' +
-                  '<div style="font-weight:600;">' + (sl.course_name||'?') + ' <span class="badge bg-blue">Sec ' + (sl.section||'-') + '</span></div>' +
-                  '<div style="font-size:.8rem;color:var(--muted);">' + sl.start_time + ' – ' + sl.end_time + ' · ' + (sl.room||'No room') + ' · ' + (sl.branch||'') + '</div>' +
-                '</div>' +
-                '<div style="display:flex;gap:8px;align-items:center;">' + actionHtml + '</div>' +
-              '</div>';
-            }).join('')
-        ) +
-      '</div>';
-    }).join('')}`;
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);">';
+        html += '<div>';
+        html += '<div style="font-weight:600;">' + (sl.course_name||'?') + ' <span class="badge bg-blue">Sec ' + (sl.section||'-') + '</span></div>';
+        html += '<div style="font-size:.8rem;color:var(--muted);">' + sl.start_time + ' – ' + sl.end_time + ' &nbsp;·&nbsp; ' + (sl.room||'No room') + ' &nbsp;·&nbsp; ' + (sl.branch||'All branches') + '</div>';
+        html += '</div>';
+        html += '<div style="display:flex;gap:8px;align-items:center;">' + actionHtml + '</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div>';
+  });
+
+  c.innerHTML = html;
 }
 
-
-/* Time-check helpers used by faculty dashboard Go Live buttons */
-function isWithinTimeWindow(sl) {
-  const now = new Date();
-  const [sh, sm] = sl.start_time.split(':').map(Number);
-  const [eh, em] = sl.end_time.split(':').map(Number);
-  const nowM   = now.getHours()*60 + now.getMinutes();
-  return nowM >= (sh*60+sm-5) && nowM <= (eh*60+em);
-}
-function timeToStart(sl) {
-  const now = new Date();
-  const [sh, sm] = sl.start_time.split(':').map(Number);
-  const diff = (sh*60+sm) - (now.getHours()*60+now.getMinutes());
-  if (diff <= 0) return null;
-  return diff < 60 ? diff+'m' : Math.floor(diff/60)+'h '+( diff%60)+'m';
-}
 
 async function goLive(slotId) {
   loading(true, 'Getting your GPS location...');
