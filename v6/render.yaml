@@ -1,14 +1,11 @@
-services:
-  - type: web
-    name: smart-attendance-system
-    env: python
-    region: singapore          # closest to India
-    plan: free
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: SECRET_KEY
-        generateValue: true    # Render auto-generates a secure random key
-      - key: PYTHON_VERSION
-        value: 3.11.0
+#!/bin/bash
+echo "========================================"
+echo "  Smart Attendance System - Starting..."
+echo "========================================"
+cd backend
+pip install -r requirements.txt
+echo ""
+echo "Starting server at http://localhost:8000"
+echo "Press Ctrl+C to stop"
+echo ""
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000

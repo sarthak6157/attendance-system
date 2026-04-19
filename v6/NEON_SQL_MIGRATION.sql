@@ -1,47 +1,97 @@
--- Run this in Neon SQL Editor before deploying v4
--- It adds new columns without deleting existing data
+name: Create/Delete Branch for Pull Request
 
-ALTER TABLE users ADD COLUMN IF NOT EXISTS branch VARCHAR(150);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS section VARCHAR(20);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS semester VARCHAR(20);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS course VARCHAR(100);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS face_registered BOOLEAN DEFAULT FALSE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS face_embedding TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS face_image_b64 TEXT;
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - closed
 
-ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timetable_id INTEGER;
-ALTER TABLE sessions ADD COLUMN IF NOT EXISTS branch VARCHAR(150);
-ALTER TABLE sessions ADD COLUMN IF NOT EXISTS section VARCHAR(20);
-ALTER TABLE sessions ADD COLUMN IF NOT EXISTS semester VARCHAR(20);
-ALTER TABLE sessions ADD COLUMN IF NOT EXISTS course_type VARCHAR(100);
-ALTER TABLE sessions ADD COLUMN IF NOT EXISTS gps_lat VARCHAR(50);
-ALTER TABLE sessions ADD COLUMN IF NOT EXISTS gps_lng VARCHAR(50);
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
 
-ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS student_lat VARCHAR(50);
-ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS student_lng VARCHAR(50);
+jobs:
+  setup:
+    name: Setup
+    outputs:
+      branch: ${{ steps.branch_name.outputs.current_branch }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get branch name
+        id: branch_name
+        uses: tj-actions/branch-names@v8
 
-ALTER TABLE courses ADD COLUMN IF NOT EXISTS branch VARCHAR(150);
-ALTER TABLE courses ADD COLUMN IF NOT EXISTS section VARCHAR(20);
-ALTER TABLE courses ADD COLUMN IF NOT EXISTS semester VARCHAR(20);
-ALTER TABLE courses ADD COLUMN IF NOT EXISTS course_type VARCHAR(100);
+  create_neon_branch:
+    name: Create Neon Branch
+    outputs:
+      db_url: ${{ steps.create_neon_branch_encode.outputs.db_url }}
+      db_url_with_pooler: ${{ steps.create_neon_branch_encode.outputs.db_url_with_pooler }}
+    needs: setup
+    if: |
+      github.event_name == 'pull_request' && (
+      github.event.action == 'synchronize'
+      || github.event.action == 'opened'
+      || github.event.action == 'reopened')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get branch expiration date as an env variable (2 weeks from now)
+        id: get_expiration_date
+        run: echo "EXPIRES_AT=$(date -u --date '+14 days' +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+      - name: Create Neon Branch
+        id: create_neon_branch
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          expires_at: ${{ env.EXPIRES_AT }}
 
-ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS manual_edit_window INTEGER DEFAULT 10;
+# The step above creates a new Neon branch.
+# You may want to do something with the new branch, such as run migrations, run tests
+# on it, or send the connection details to a hosting platform environment.
+# The branch DATABASE_URL is available to you via:
+# "${{ steps.create_neon_branch.outputs.db_url_with_pooler }}".
+# It's important you don't log the DATABASE_URL as output as it contains a username and
+# password for your database.
+# For example, you can uncomment the lines below to run a database migration command:
+#      - name: Run Migrations
+#        run: npm run db:migrate
+#        env:
+#          # to use pooled connection
+#          DATABASE_URL: "${{ steps.create_neon_branch.outputs.db_url_with_pooler }}"
+#          # OR to use unpooled connection
+#          # DATABASE_URL: "${{ steps.create_neon_branch.outputs.db_url }}"
 
--- Create timetable_slots table if it doesn't exist
-CREATE TABLE IF NOT EXISTS timetable_slots (
-    id SERIAL PRIMARY KEY,
-    course_id INTEGER NOT NULL REFERENCES courses(id),
-    faculty_id INTEGER NOT NULL REFERENCES users(id),
-    day_of_week VARCHAR(20) NOT NULL,
-    start_time VARCHAR(10) NOT NULL,
-    end_time VARCHAR(10) NOT NULL,
-    room VARCHAR(100),
-    branch VARCHAR(150),
-    section VARCHAR(20),
-    semester VARCHAR(20),
-    course_type VARCHAR(100),
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT NOW()
-);
+# Following the step above, which runs database migrations, you may want to check
+# for schema changes in your database. We recommend using the following action to
+# post a comment to your pull request with the schema diff. For this action to work,
+# you also need to give permissions to the workflow job to be able to post comments
+# and read your repository contents. Add the following permissions to the workflow job:
+#
+# permissions:
+#   contents: read
+#   pull-requests: write
+#
+# You can also check out https://github.com/neondatabase/schema-diff-action for more
+# information on how to use the schema diff action.
+# You can uncomment the lines below to enable the schema diff action.
+#      - name: Post Schema Diff Comment to PR
+#        uses: neondatabase/schema-diff-action@v1
+#        with:
+#          project_id: ${{ vars.NEON_PROJECT_ID }}
+#          compare_branch: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
+#          api_key: ${{ secrets.NEON_API_KEY }}
 
-SELECT 'Migration complete!' as status;
+  delete_neon_branch:
+    name: Delete Neon Branch
+    needs: setup
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Neon Branch
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}
