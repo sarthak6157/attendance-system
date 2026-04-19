@@ -28,11 +28,11 @@ def create_course(payload: CourseCreate, _: User = Depends(AdminOnly), db: DBSes
         branch=payload.branch,
         section=payload.section,
         semester=payload.semester,
-        course_type=getattr(payload, "course_type", None),
+        course_type=payload.course_type,
         credits=payload.credits,
     )
     db.add(course)
-    upsert_branch(db, getattr(payload, "course_type", None), payload.branch)
+    upsert_branch(db, payload.course_type, payload.branch)
     db.commit()
     db.refresh(course)
     return course

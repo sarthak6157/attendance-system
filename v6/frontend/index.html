@@ -1515,7 +1515,10 @@ async function fetchBranchesByCourse(course, forceRefresh = false) {
   const key = (course || '').trim();
   if (!key) return [];
   if (!forceRefresh && Array.isArray(branchOptionsCache[key])) return branchOptionsCache[key];
-  const data = await API.get(`/branches?course=${encodeURIComponent(key)}`).catch(() => ({ branches: [] }));
+  const data = await API.get(`/branches?course=${encodeURIComponent(key)}`).catch((err) => {
+    console.warn('Failed to load branches for course:', key, err);
+    return { branches: [] };
+  });
   const options = toUniqueBranchList(Array.isArray(data) ? data : data?.branches);
   branchOptionsCache[key] = options;
   return options;
@@ -1635,6 +1638,7 @@ async function doRegister() {
     toast(' Registered successfully! Await admin approval before you can login.','success');
     showPage('loginPage');
   } catch(e) {
+    if (course) delete branchOptionsCache[course];
     toast(e.message || 'Registration failed','error');
   } finally {
     btn.disabled = false;

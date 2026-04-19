@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.get("")
 def list_branches(
-    course: str = Query(..., min_length=1),
+    course: str = Query(...),
     db: DBSession = Depends(get_db),
 ):
     course_name = course.strip()
@@ -26,4 +26,3 @@ def list_branches(
         .all()
     )
     return {"course": course_name, "branches": [row[0] for row in rows]}
-

@@ -44,7 +44,8 @@ def normalize_branch_name(course: Optional[str], branch: Optional[str]) -> Optio
             return value
         prefix = f"{c} - "
         if value.lower().startswith(prefix.lower()):
-            value = value[len(prefix):].strip()
+            parts = value.split(" - ", 1)
+            value = parts[1].strip() if len(parts) == 2 else value[len(prefix):].strip()
         if value.lower() == c.lower():
             return None
     return value or None
@@ -66,4 +67,3 @@ def ensure_default_branches_for_course(db: Session, course: Optional[str]) -> No
         return
     for branch in DEFAULT_BRANCH_MAP.get(course_name, []):
         upsert_branch(db, course_name, branch)
-

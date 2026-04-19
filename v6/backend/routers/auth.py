@@ -38,6 +38,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=409, detail="User with this ID or email already exists.")
     dept = payload.department or payload.branch or ''
+    course_type = getattr(payload, "course_type", None)
     new_user = User(
         full_name=payload.full_name,
         inst_id=payload.inst_id,
@@ -47,12 +48,12 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
         hashed_password=hash_password(payload.password),
         department=dept,
         branch=payload.branch or payload.department or '',
-        section=getattr(payload, 'section', None),
-        semester=getattr(payload, 'semester', None),
-        course=getattr(payload, 'course_type', None),
+        section=getattr(payload, "section", None),
+        semester=getattr(payload, "semester", None),
+        course=course_type,
     )
     db.add(new_user)
-    upsert_branch(db, getattr(payload, "course_type", None), new_user.branch)
+    upsert_branch(db, course_type, payload.branch)
     db.commit()
     db.refresh(new_user)
     return new_user
