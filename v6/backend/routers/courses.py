@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session as DBSession
 
+from core.branches import upsert_branch
 from core.security import get_current_user, require_roles
 from db.database import get_db
 from models.models import Course, User, UserRole
@@ -20,8 +21,18 @@ def list_courses(_: User = Depends(get_current_user), db: DBSession = Depends(ge
 def create_course(payload: CourseCreate, _: User = Depends(AdminOnly), db: DBSession = Depends(get_db)):
     if db.query(Course).filter(Course.code == payload.code.upper()).first():
         raise HTTPException(status_code=400, detail="Course code already exists.")
-    course = Course(code=payload.code.upper(), name=payload.name, department=payload.department, credits=payload.credits)
+    course = Course(
+        code=payload.code.upper(),
+        name=payload.name,
+        department=payload.department,
+        branch=payload.branch,
+        section=payload.section,
+        semester=payload.semester,
+        course_type=payload.course_type,
+        credits=payload.credits,
+    )
     db.add(course)
+    upsert_branch(db, payload.course_type, payload.branch)
     db.commit()
     db.refresh(course)
     return course

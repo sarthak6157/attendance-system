@@ -75,6 +75,7 @@ class CourseCreate(BaseModel):
     branch:     Optional[str] = None
     section:    Optional[str] = None
     semester:   Optional[str] = None
+    course_type: Optional[str] = None
     credits: int = 3
 
 class CourseOut(BaseModel):
@@ -85,6 +86,7 @@ class CourseOut(BaseModel):
     branch:     Optional[str]
     section:    Optional[str]
     semester:   Optional[str]
+    course_type: Optional[str]
     credits: int
     class Config:
         from_attributes = True

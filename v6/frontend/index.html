@@ -1414,6 +1414,7 @@ let camStream   = null;
 let scanState   = {};
 let cachedCourses = [];
 let cachedSettings = {};
+const branchOptionsCache = {};
 
 /* =========================== UTILS =========================== */
 function showPage(id) {
@@ -1505,24 +1506,46 @@ function routeUser(user) {
   }
 }
 
-/* Branch options per course */
-const BRANCH_MAP = {
-  'B.Tech': ['CSE (Computer Science & Engineering)','ECE (Electronics & Communication)','ME (Mechanical Engineering)','Civil Engineering','EE (Electrical Engineering)','IT (Information Technology)','Chemical Engineering','Biotechnology','Aerospace Engineering'],
-  'B.E':    ['CSE','ECE','ME','Civil','EE','IT','Chemical','Biotechnology'],
-  'BCA':    ['BCA (General)','BCA with Data Science','BCA with Cybersecurity'],
-  'MCA':    ['MCA (General)','MCA with AI/ML','MCA with Cloud Computing'],
-  'MBA':    ['Finance','Marketing','Human Resource','Operations','Business Analytics','International Business'],
-  'B.Pharma':['B.Pharma (General)','Pharmaceutical Chemistry','Pharmacology'],
-  'M.Tech': ['CSE','ECE','ME','Civil','AI & Machine Learning','Data Science','VLSI Design'],
-  'B.Sc':   ['Physics','Chemistry','Mathematics','Biology','Computer Science','Statistics'],
-  'M.Sc':   ['Physics','Chemistry','Mathematics','Biology','Computer Science'],
-  'BBA':    ['BBA (General)','BBA Finance','BBA Marketing','BBA HR'],
-  'B.Com':  ['B.Com (General)','B.Com Hons','B.Com with CA'],
-  'LLB':    ['LLB (General)','LLB (Corporate Law)','LLB (Criminal Law)'],
-  'MBBS':   ['MBBS (General Medicine)'],
-};
+function toUniqueBranchList(list) {
+  if (!Array.isArray(list)) return [];
+  return [...new Set(list.map(x => (x || '').trim()).filter(Boolean))];
+}
 
-function updateBranches() {
+async function fetchBranchesByCourse(course, forceRefresh = false) {
+  const key = (course || '').trim();
+  if (!key) return [];
+  if (!forceRefresh && Array.isArray(branchOptionsCache[key])) return branchOptionsCache[key];
+  const data = await API.get(`/branches?course=${encodeURIComponent(key)}`).catch((err) => {
+    console.warn('Failed to load branches for course:', key, err);
+    return { branches: [] };
+  });
+  const options = toUniqueBranchList(Array.isArray(data) ? data : data?.branches);
+  branchOptionsCache[key] = options;
+  return options;
+}
+
+function fillBranchSelect(sel, branches, firstLabel, customValue, customLabel) {
+  if (!sel) return;
+  sel.innerHTML = '';
+  const first = document.createElement('option');
+  first.value = '';
+  first.textContent = firstLabel;
+  sel.appendChild(first);
+  branches.forEach(branch => {
+    const opt = document.createElement('option');
+    opt.value = branch;
+    opt.textContent = branch;
+    sel.appendChild(opt);
+  });
+  if (customValue && customLabel) {
+    const custom = document.createElement('option');
+    custom.value = customValue;
+    custom.textContent = customLabel;
+    sel.appendChild(custom);
+  }
+}
+
+async function updateBranches() {
   const course = document.getElementById('regCourse').value;
   const branchSel = document.getElementById('regBranch');
   const branchGroup = document.getElementById('branchGroup');
@@ -1537,11 +1560,14 @@ function updateBranches() {
     return;
   }
 
-  const known = BRANCH_MAP[course] || [];
-  branchSel.innerHTML =
-    '<option value="">- Select Branch (optional) -</option>' +
-    known.map(b => `<option value="${b}">${b}</option>`).join('') +
-    '<option value="__new__">+ Add new branch / specialization...</option>';
+  const known = await fetchBranchesByCourse(course);
+  fillBranchSelect(
+    branchSel,
+    known,
+    '- Select Branch (optional) -',
+    '__new__',
+    '+ Add new branch / specialization...'
+  );
 
   branchGroup.style.display = 'block';
   secSemGroup.style.display = 'grid';
@@ -1565,11 +1591,6 @@ function getRegBranch() {
   const sel = document.getElementById('regBranch');
   if (sel.value === '__new__') {
     const custom = (document.getElementById('regBranchCustom')?.value || '').trim();
-    // Save to BRANCH_MAP so it appears next time
-    const course = document.getElementById('regCourse').value;
-    if (custom && course && BRANCH_MAP[course] && !BRANCH_MAP[course].includes(custom)) {
-      BRANCH_MAP[course].push(custom);
-    }
     return custom;
   }
   return sel.value;
@@ -1599,7 +1620,8 @@ async function doRegister() {
   const btn = document.getElementById('regBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Registering...';
   try {
-    const dept = `${course} - ${branch}`;
+    const fullBranch = (course && branch) ? `${course} - ${branch}` : '';
+    const dept = fullBranch || course || '';
     await API.post('/auth/register', {
       full_name: name,
       inst_id:   enroll,
@@ -1607,13 +1629,16 @@ async function doRegister() {
       password:  pass,
       role:      'student',
       department: dept,
-      branch:    `${course} - ${branch}`,
+      branch:    fullBranch,
+      course_type: course,
       section,
       semester:  sem,
     });
+    if (course) delete branchOptionsCache[course];
     toast(' Registered successfully! Await admin approval before you can login.','success');
     showPage('loginPage');
   } catch(e) {
+    if (course) delete branchOptionsCache[course];
     toast(e.message || 'Registration failed','error');
   } finally {
     btn.disabled = false;
@@ -1905,32 +1930,41 @@ function toggleAdminUserFields() {
 /* ==============================================
    BRANCH DROPDOWN HELPERS - Extra Class & Slot
 ============================================== */
-function buildBranchOptions(course, selectId) {
+async function buildBranchOptions(course, selectId) {
   const sel = document.getElementById(selectId);
   if (!sel) return;
-  const known = (typeof BRANCH_MAP !== 'undefined' ? BRANCH_MAP : {})[course] || [];
-  sel.innerHTML = '<option value="">- Select branch -</option>' +
-    known.map(b => {
-      const combined = course + ' - ' + b;
-      return '<option value="' + combined + '">' + b + '</option>';
-    }).join('') +
-    '<option value="">All branches (no filter)</option>';
+  const known = await fetchBranchesByCourse(course);
+  sel.innerHTML = '';
+  const first = document.createElement('option');
+  first.value = '';
+  first.textContent = '- Select branch -';
+  sel.appendChild(first);
+  known.forEach(branch => {
+    const opt = document.createElement('option');
+    opt.value = `${course} - ${branch}`;
+    opt.textContent = branch;
+    sel.appendChild(opt);
+  });
+  const all = document.createElement('option');
+  all.value = '';
+  all.textContent = 'All branches (no filter)';
+  sel.appendChild(all);
 }
 
-function updateEcBranches() {
+async function updateEcBranches() {
   const course = document.getElementById('ec_course_prog')?.value || '';
   const brSel  = document.getElementById('ec_branch');
   if (!brSel) return;
   if (!course) { brSel.innerHTML = '<option value="">- Select course first -</option>'; return; }
-  buildBranchOptions(course, 'ec_branch');
+  await buildBranchOptions(course, 'ec_branch');
 }
 
-function updateSlBranches() {
+async function updateSlBranches() {
   const course = document.getElementById('sl_course_prog')?.value || '';
   const brSel  = document.getElementById('sl_branch');
   if (!brSel) return;
   if (!course) { brSel.innerHTML = '<option value="">- Select course first -</option>'; return; }
-  buildBranchOptions(course, 'sl_branch');
+  await buildBranchOptions(course, 'sl_branch');
 }
 
 function getEcBranch() {
@@ -1942,7 +1976,7 @@ function getSlBranch() {
 }
 
 
-function updateAdminBranches() {
+async function updateAdminBranches() {
   const course = document.getElementById('mu_course').value;
   const brSel  = document.getElementById('mu_branch');
   const brGrp  = document.getElementById('mu_branch_group');
@@ -1950,11 +1984,14 @@ function updateAdminBranches() {
   const cwrap  = document.getElementById('mu_branch_custom_wrap');
   if (cwrap) cwrap.style.display = 'none';
   if (!course) { brGrp.style.display='none'; ssGrp.style.display='none'; return; }
-  const known = (typeof BRANCH_MAP !== 'undefined' ? BRANCH_MAP : {})[course] || [];
-  brSel.innerHTML =
-    '<option value="">- Select Branch (optional) -</option>' +
-    known.map(b => `<option value="${b}">${b}</option>`).join('') +
-    '<option value="__new__">+ Add new branch / specialization...</option>';
+  const known = await fetchBranchesByCourse(course);
+  fillBranchSelect(
+    brSel,
+    known,
+    '- Select Branch (optional) -',
+    '__new__',
+    '+ Add new branch / specialization...'
+  );
   brGrp.style.display = 'block';
   ssGrp.style.display = 'grid';
   ssGrp.style.gridTemplateColumns = '1fr 1fr';
@@ -1976,12 +2013,7 @@ function handleAdminBranchSelect() {
 function getAdminBranch() {
   const sel = document.getElementById('mu_branch');
   if (sel.value === '__new__') {
-    const custom = (document.getElementById('mu_branch_custom')?.value || '').trim();
-    const course = document.getElementById('mu_course')?.value;
-    if (custom && course && BRANCH_MAP[course] && !BRANCH_MAP[course].includes(custom)) {
-      BRANCH_MAP[course].push(custom);
-    }
-    return custom;
+    return (document.getElementById('mu_branch_custom')?.value || '').trim();
   }
   return sel.value;
 }
@@ -2017,6 +2049,7 @@ async function saveNewUser() {
     });
     closeModal('addUserModal');
     toast(` ${role} "${newUser.full_name}" saved! ID: ${id}`, 'success');
+    if (course) delete branchOptionsCache[course];
     ['mu_name','mu_id','mu_email','mu_pass'].forEach(x=>{ const el=document.getElementById(x); if(el) el.value=''; });
     document.getElementById('mu_course').value='';
     updateAdminBranches();
@@ -2106,16 +2139,14 @@ async function renderCourses(c) {
 }
 
 /* Course modal - branch/section helpers */
-function updateCourseBranches() {
+async function updateCourseBranches() {
   const prog = document.getElementById('mc_program').value;
   const brGrp = document.getElementById('mc_branch_group');
   const ssSGrp = document.getElementById('mc_sec_sem_group');
   const brSel = document.getElementById('mc_branch_sel');
   if (!prog) { brGrp.style.display='none'; ssSGrp.style.display='none'; return; }
-  const branches = (typeof BRANCH_MAP !== 'undefined' ? BRANCH_MAP : {})[prog] || [];
-  brSel.innerHTML = '<option value="">- All branches / Select -</option>' +
-    branches.map(b => `<option value="${b}">${b}</option>`).join('') +
-    '<option value="__custom__">+ Add new branch...</option>';
+  const branches = await fetchBranchesByCourse(prog);
+  fillBranchSelect(brSel, branches, '- All branches / Select -', '__custom__', '+ Add new branch...');
   brGrp.style.display = 'block';
   ssSGrp.style.display = 'grid';
   ssSGrp.style.gridTemplateColumns = '1fr 1fr';
@@ -2153,10 +2184,7 @@ async function saveNewCourse() {
       section, semester, course_type:prog, credits });
     closeModal('addCourseModal');
     toast(`Course "${name}" added!`,'success');
-    // Also add branch to BRANCH_MAP if new
-    if (branch && typeof BRANCH_MAP !== 'undefined' && BRANCH_MAP[prog]) {
-      if (!BRANCH_MAP[prog].includes(branch)) BRANCH_MAP[prog].push(branch);
-    }
+    delete branchOptionsCache[prog];
     await renderCourses(document.getElementById('adminContent'));
   } catch(e) { toast(e.message,'error'); }
 }

@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from db.database import Base, engine
-from routers import auth, users, sessions, attendance, courses, settings as settings_router, timetable
+from routers import auth, users, sessions, attendance, courses, settings as settings_router, timetable, branches
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Smart Attendance System API", version="3.0.0")
@@ -50,6 +50,7 @@ app.include_router(users.router,            prefix="/api/users",      tags=["Use
 app.include_router(sessions.router,         prefix="/api/sessions",   tags=["Sessions"])
 app.include_router(attendance.router,       prefix="/api/attendance", tags=["Attendance"])
 app.include_router(courses.router,          prefix="/api/courses",    tags=["Courses"])
+app.include_router(branches.router,         prefix="/api/branches",   tags=["Branches"])
 app.include_router(settings_router.router,  prefix="/api/settings",   tags=["Settings"])
 app.include_router(timetable.router,        prefix="/api/timetable",  tags=["Timetable"])
 
