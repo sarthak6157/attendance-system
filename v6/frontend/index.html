@@ -4,12 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Smart Attendance System — TMU</title>
-<link rel="manifest" id="pwa-manifest">
-<meta name="theme-color" content="#1a3c6e">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Attendance TMU">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -788,56 +782,10 @@ button, input, select, textarea { font-family: inherit; }
     <button class="btn btn-primary" id="loginBtn" style="width:100%;justify-content:center;padding:12px;" onclick="doLogin()">
       <i class="fa-solid fa-right-to-bracket"></i> Login
     </button>
-    <div style="text-align:center;margin-top:10px;">
-      <a href="#" onclick="openForgotPassword()" style="font-size:.83rem;color:var(--accent2);font-weight:600;"><i class="fa-solid fa-key" style="font-size:.75rem;"></i> Forgot password?</a>
-    </div>
-    <div style="text-align:center;margin-top:8px;font-size:.85rem;color:var(--muted);">
+    <div style="text-align:center;margin-top:16px;font-size:.85rem;color:var(--muted);">
       Don't have an account? <a href="#" onclick="showPage('registerPage')" style="color:var(--primary);font-weight:600;">Register here</a>
     </div>
 
-  </div>
-</div>
-
-<!-- ═══════════════ FORGOT PASSWORD MODAL ═══════════════ -->
-<div class="modal-overlay" id="forgotModal">
-  <div class="modal-box" style="max-width:420px;">
-    <div id="fp-step1">
-      <h3 style="margin-bottom:4px;"><i class="fa-solid fa-key" style="color:var(--accent);"></i> Forgot Password</h3>
-      <p style="color:var(--muted);font-size:.85rem;margin-bottom:18px;">Enter your registered email or Enrollment No.</p>
-      <div class="form-group"><label class="form-label">Email / Enrollment No.</label>
-        <div class="input-icon"><i class="fa-solid fa-envelope"></i>
-          <input class="form-control" id="fp_email" placeholder="your@email.com or TCA2559184" style="padding-left:36px;"></div></div>
-      <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('forgotModal')">Cancel</button>
-        <button class="btn btn-accent" id="fp_sendBtn" onclick="fpSendOtp()"><i class="fa-solid fa-paper-plane"></i> Send OTP</button></div>
-    </div>
-    <div id="fp-step2" style="display:none;">
-      <h3 style="margin-bottom:4px;"><i class="fa-solid fa-shield-halved" style="color:var(--success);"></i> Enter OTP</h3>
-      <p style="color:var(--muted);font-size:.85rem;margin-bottom:6px;">Sent to <strong id="fp_emailDisplay"></strong></p>
-      <div class="alert alert-info" style="margin-bottom:14px;font-size:.82rem;"><i class="fa-solid fa-clock"></i> Expires in <span id="fp_timer" style="font-weight:700;">10:00</span></div>
-      <input class="form-control" id="fp_otp" maxlength="6" placeholder="6-digit OTP"
-        style="font-size:1.6rem;letter-spacing:10px;text-align:center;font-weight:700;margin-bottom:14px;"
-        oninput="this.value=this.value.replace(/[^0-9]/g,'');if(this.value.length===6)fpVerifyOtp()">
-      <div class="modal-footer">
-        <button class="btn btn-outline btn-sm" onclick="fpResend()"><i class="fa-solid fa-rotate"></i> Resend</button>
-        <button class="btn btn-primary" id="fp_verifyBtn" onclick="fpVerifyOtp()"><i class="fa-solid fa-check"></i> Verify OTP</button></div>
-    </div>
-    <div id="fp-step3" style="display:none;">
-      <h3 style="margin-bottom:4px;"><i class="fa-solid fa-lock" style="color:var(--primary);"></i> Set New Password</h3>
-      <p style="color:var(--muted);font-size:.85rem;margin-bottom:18px;">OTP verified! Choose a strong new password.</p>
-      <div class="form-group"><label class="form-label">New Password</label>
-        <input class="form-control" id="fp_newpass" type="password" placeholder="Min 6 characters"></div>
-      <div class="form-group"><label class="form-label">Confirm Password</label>
-        <input class="form-control" id="fp_newpass2" type="password" placeholder="Repeat password"></div>
-      <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('forgotModal')">Cancel</button>
-        <button class="btn btn-success" id="fp_resetBtn" onclick="fpResetPassword()"><i class="fa-solid fa-check-circle"></i> Reset Password</button></div>
-    </div>
-    <div id="fp-step4" style="display:none;text-align:center;padding:10px 0;">
-      <div style="font-size:3rem;margin-bottom:12px;">✅</div>
-      <h3 style="color:var(--success);">Password Reset!</h3>
-      <p style="color:var(--muted);font-size:.88rem;margin-bottom:20px;">You can now login with your new password.</p>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="closeModal('forgotModal');showPage('loginPage');">
-        <i class="fa-solid fa-right-to-bracket"></i> Go to Login</button>
-    </div>
   </div>
 </div>
 
@@ -995,9 +943,7 @@ button, input, select, textarea { font-family: inherit; }
         <a href="#" onclick="adminNav('sessions')" id="anav-sessions"><i class="fa-solid fa-calendar-check"></i> All Sessions</a>
         <div class="nav-section">Reports</div>
         <a href="#" onclick="adminNav('reports')" id="anav-reports"><i class="fa-solid fa-chart-bar"></i> Attendance Reports</a>
-        <a href="#" onclick="adminNav('defaulters')" id="anav-defaulters"><i class="fa-solid fa-triangle-exclamation"></i> Defaulter List</a>
         <div class="nav-section">System</div>
-        <a href="#" onclick="adminNav('audit')" id="anav-audit"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
         <a href="#" onclick="adminNav('settings')" id="anav-settings"><i class="fa-solid fa-gear"></i> Settings</a>
         <a href="#" onclick="adminNav('profile')" id="anav-profile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
       </nav>
@@ -1051,7 +997,6 @@ button, input, select, textarea { font-family: inherit; }
     <button class="ham-btn" onclick="toggleSidebar('stuSb')" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
     <div class="brand"><i class="fa-solid fa-graduation-cap"></i> Smart Attendance <span>STUDENT</span></div>
     <div class="navbar-right">
-      <button id="pwaInstallBtn" class="nav-btn" onclick="pwaInstall()" style="display:none;"><i class="fa-solid fa-download"></i> Install App</button>
       <button class="nav-btn" onclick="stuNav('scan')"><i class="fa-solid fa-qrcode"></i> Scan QR</button>
       <div class="user-chip">
         <div class="av" id="stuAv">S</div>
@@ -1077,7 +1022,6 @@ button, input, select, textarea { font-family: inherit; }
         <a href="#" onclick="stuNav('timetable')" id="snav-timetable"><i class="fa-solid fa-calendar-days"></i> My Timetable</a>
         <a href="#" onclick="stuNav('scan')" id="snav-scan"><i class="fa-solid fa-qrcode"></i> Mark Attendance</a>
         <a href="#" onclick="stuNav('history')" id="snav-history"><i class="fa-solid fa-history"></i> Attendance History</a>
-        <a href="#" onclick="stuNav('calendar')" id="snav-calendar"><i class="fa-solid fa-calendar-days"></i> Calendar View</a>
         <div class="nav-section">Account</div>
         <a href="#" onclick="stuNav('profile')" id="snav-profile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
       </nav>
@@ -1389,7 +1333,7 @@ button, input, select, textarea { font-family: inherit; }
 </div>
 
 <script>
-/* ══════════ SIDEBAR TOGGLE (mobile) ══════════ */
+/* ========== SIDEBAR TOGGLE (mobile) ========== */
 function toggleSidebar(id) {
   const sb = document.getElementById(id);
   const ov = document.getElementById('sbOverlay');
@@ -1418,7 +1362,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-/* ══════════ LOADING OVERLAY ══════════════════ */
+/* ========== LOADING OVERLAY ================== */
 function showLoading(msg) {
   const ov = document.getElementById('loadingOverlay');
   const lm = document.getElementById('loadMsg');
@@ -1431,9 +1375,9 @@ function hideLoading() {
 }
 
 
-/* ═══════════════════════════ API CONFIG ═══════════════════════════ */
+/* =========================== API CONFIG =========================== */
 const API = (() => {
-  // Always use same origin — works locally AND on Render automatically
+  // Always use same origin - works locally AND on Render automatically
   const base = `${window.location.protocol}//${window.location.host}/api`;
 
   const token = () => localStorage.getItem('sas_token');
@@ -1461,7 +1405,7 @@ const API = (() => {
   };
 })();
 
-/* ═══════════════════════════ STATE ═══════════════════════════ */
+/* =========================== STATE =========================== */
 let currentUser = null;
 let loginRole   = 'student';
 let qrInterval  = null;
@@ -1470,7 +1414,7 @@ let scanState   = {};
 let cachedCourses = [];
 let cachedSettings = {};
 
-/* ═══════════════════════════ UTILS ═══════════════════════════ */
+/* =========================== UTILS =========================== */
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -1511,7 +1455,7 @@ function setNavActive(prefix, section) {
   if (el) el.classList.add('active');
 }
 
-/* ═══════════════════════════ AUTH ═══════════════════════════ */
+/* =========================== AUTH =========================== */
 function setLoginRole(r) {
   loginRole = r;
   document.querySelectorAll('.login-tab').forEach((t,i) => t.classList.toggle('active', ['student','faculty','admin'][i]===r));
@@ -1594,9 +1538,9 @@ function updateBranches() {
 
   const known = BRANCH_MAP[course] || [];
   branchSel.innerHTML =
-    '<option value="">— Select Branch (optional) —</option>' +
+    '<option value="">- Select Branch (optional) -</option>' +
     known.map(b => `<option value="${b}">${b}</option>`).join('') +
-    '<option value="__new__">➕ Add new branch / specialization...</option>';
+    '<option value="__new__">+ Add new branch / specialization...</option>';
 
   branchGroup.style.display = 'block';
   secSemGroup.style.display = 'grid';
@@ -1645,7 +1589,7 @@ async function doRegister() {
   if (!enroll) { toast('Please enter your enrollment number','warning'); return; }
   if (!email)  { toast('Please enter your email','warning'); return; }
   if (!pass)   { toast('Please set a password','warning'); return; }
-  // Academic fields are all optional — no mandatory check
+  // Academic fields are all optional - no mandatory check
   // section and semester are optional
   if (!pass)    { toast('Please set a password','warning'); return; }
   if (pass !== pass2) { toast('Passwords do not match','error'); return; }
@@ -1666,7 +1610,7 @@ async function doRegister() {
       section,
       semester:  sem,
     });
-    toast('✅ Registered successfully! Await admin approval before you can login.','success');
+    toast(' Registered successfully! Await admin approval before you can login.','success');
     showPage('loginPage');
   } catch(e) {
     toast(e.message || 'Registration failed','error');
@@ -1674,6 +1618,11 @@ async function doRegister() {
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Register Account';
   }
+}
+
+
+function openForgotPassword() {
+  toast('Please contact your administrator to reset your password.', 'warning');
 }
 
 function doLogout() {
@@ -1690,7 +1639,7 @@ function doLogout() {
   toast('Logged out successfully');
 }
 
-/* ═══════════════════════════ ADMIN ═══════════════════════════ */
+/* =========================== ADMIN =========================== */
 function initAdmin() {
   const u = currentUser;
   document.getElementById('adminNameNav').textContent    = u.full_name.split(' ')[0];
@@ -1711,8 +1660,6 @@ async function adminNav(section) {
     timetable: renderTimetable,
     sessions:  renderAllSessions,
     reports:   renderReports,
-    defaulters: c => renderDefaulters(c),
-    audit:      c => renderAuditLog(c),
     settings:  renderSettingsPage,
     profile:   (c) => renderProfile(c, currentUser),
   };
@@ -1763,8 +1710,8 @@ async function renderAdminDashboard(c) {
           active.slice(0,3).map(s=>{
             const co = cachedCourses.find(x=>x.id===s.course_id);
             return `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
-              <div style="font-weight:600;">${s.title} — ${co?.name||'?'}</div>
-              <div style="font-size:.8rem;color:var(--muted);">${s.location||'No location'} · <span class="badge bg-green">Live</span></div>
+              <div style="font-weight:600;">${s.title} - ${co?.name||'?'}</div>
+              <div style="font-size:.8rem;color:var(--muted);">${s.location||'No location'} &middot; <span class="badge bg-green">Live</span></div>
             </div>`;
           }).join('')}
       </div>
@@ -1795,16 +1742,6 @@ async function renderUserMgmt(c) {
     <div class="card">
       <div class="search-bar">
         <input class="form-control" id="userSearch" placeholder="Search by name, ID, email..." style="max-width:280px;" oninput="filterUsersTable()">
-        <select class="form-control form-select" id="userRoleFilter" style="max-width:130px;" onchange="filterUsersTable()">
-          <option value="">All Roles</option><option value="student">Students</option>
-          <option value="faculty">Faculty</option><option value="admin">Admin</option>
-        </select>
-        <select class="form-control form-select" id="userStatusFilter" style="max-width:140px;" onchange="filterUsersTable()">
-          <option value="">All Status</option><option value="active">Active</option>
-          <option value="pending">Pending</option><option value="inactive">Inactive</option>
-        </select>
-        <button class="btn btn-outline btn-sm" onclick="exportTableCSV('usersTable','users.csv')" title="Export CSV"><i class="fa-solid fa-download"></i></button>
-        <button class="btn btn-outline btn-sm" onclick="printContent('User List')" title="Print"><i class="fa-solid fa-print"></i></button>
         <select class="form-control form-select" id="roleFilter" onchange="filterUsersTable()" style="max-width:140px;">
           <option value="">All Roles</option><option value="student">Students</option><option value="faculty">Faculty</option><option value="admin">Admins</option>
         </select>
@@ -1830,14 +1767,10 @@ async function loadUsersTable() {
 
 function filterUsersTable() {
   const search = (document.getElementById('userSearch')?.value||'').toLowerCase();
-  const roleF  = (document.getElementById('userRoleFilter')?.value||'');
-  const statF  = (document.getElementById('userStatusFilter')?.value||'');
   const role   = document.getElementById('roleFilter')?.value||'';
   const status = document.getElementById('statusFilter')?.value||'';
   let list = allUsersCache;
   if (search) list = list.filter(u => `${u.full_name} ${u.inst_id} ${u.email}`.toLowerCase().includes(search));
-  if (roleF)  list = list.filter(u => u.role   === roleF);
-  if (statF)  list = list.filter(u => u.status === statF);
   if (role)   list = list.filter(u => u.role   === role);
   if (status) list = list.filter(u => u.status === status);
   const wrap = document.getElementById('usersTableBody');
@@ -1862,12 +1795,12 @@ function filterUsersTable() {
     </tr>`).join('')}</tbody></table></div>`;
 }
 
-/* ══════════════════════════════════════════════════════
-   EDIT USER — Admin can correct any student/faculty data
-══════════════════════════════════════════════════════ */
+/* ======================================================
+   EDIT USER - Admin can correct any student/faculty data
+====================================================== */
 function openEditUser(userId) {
   const user = (allUsersCache||[]).find(u => u.id === userId);
-  if (!user) { toast('User not found — please reload the page','error'); return; }
+  if (!user) { toast('User not found - please reload the page','error'); return; }
 
   document.getElementById('eu_id').value       = user.id;
   document.getElementById('eu_role_val').value = user.role;
@@ -1925,7 +1858,7 @@ async function saveEditUser() {
   try {
     await API.patch(`/users/${id}`, payload);
     closeModal('editUserModal');
-    toast('✅ User details updated successfully!', 'success');
+    toast(' User details updated successfully!', 'success');
     await loadUsersTable();
   } catch(e) {
     toast(e.message || 'Failed to update', 'error');
@@ -1938,7 +1871,6 @@ async function approveUser(id) {
   try {
     await API.patch(`/users/${id}/status`, { status: 'active' });
     toast('User approved!','success');
-    auditLog('approve_user', `User ID ${id}`, 'Status set to active');
     await loadUsersTable();
     updatePendingBadge();
   } catch(e) { toast(e.message,'error'); }
@@ -1962,21 +1894,21 @@ async function deleteUser(id, name) {
   } catch(e) { toast(e.message,'error'); }
 }
 
-/* Admin user modal — toggle student vs staff fields */
+/* Admin user modal - toggle student vs staff fields */
 function toggleAdminUserFields() {
   const role = document.getElementById('mu_role').value;
   document.getElementById('mu_student_fields').style.display = role === 'student' ? 'block' : 'none';
   document.getElementById('mu_staff_fields').style.display   = role !== 'student' ? 'block' : 'none';
 }
 
-/* ══════════════════════════════════════════════
-   BRANCH DROPDOWN HELPERS — Extra Class & Slot
-══════════════════════════════════════════════ */
+/* ==============================================
+   BRANCH DROPDOWN HELPERS - Extra Class & Slot
+============================================== */
 function buildBranchOptions(course, selectId) {
   const sel = document.getElementById(selectId);
   if (!sel) return;
   const known = (typeof BRANCH_MAP !== 'undefined' ? BRANCH_MAP : {})[course] || [];
-  sel.innerHTML = '<option value="">— Select branch —</option>' +
+  sel.innerHTML = '<option value="">- Select branch -</option>' +
     known.map(b => {
       const combined = course + ' - ' + b;
       return '<option value="' + combined + '">' + b + '</option>';
@@ -1988,7 +1920,7 @@ function updateEcBranches() {
   const course = document.getElementById('ec_course_prog')?.value || '';
   const brSel  = document.getElementById('ec_branch');
   if (!brSel) return;
-  if (!course) { brSel.innerHTML = '<option value="">— Select course first —</option>'; return; }
+  if (!course) { brSel.innerHTML = '<option value="">- Select course first -</option>'; return; }
   buildBranchOptions(course, 'ec_branch');
 }
 
@@ -1996,7 +1928,7 @@ function updateSlBranches() {
   const course = document.getElementById('sl_course_prog')?.value || '';
   const brSel  = document.getElementById('sl_branch');
   if (!brSel) return;
-  if (!course) { brSel.innerHTML = '<option value="">— Select course first —</option>'; return; }
+  if (!course) { brSel.innerHTML = '<option value="">- Select course first -</option>'; return; }
   buildBranchOptions(course, 'sl_branch');
 }
 
@@ -2019,9 +1951,9 @@ function updateAdminBranches() {
   if (!course) { brGrp.style.display='none'; ssGrp.style.display='none'; return; }
   const known = (typeof BRANCH_MAP !== 'undefined' ? BRANCH_MAP : {})[course] || [];
   brSel.innerHTML =
-    '<option value="">— Select Branch (optional) —</option>' +
+    '<option value="">- Select Branch (optional) -</option>' +
     known.map(b => `<option value="${b}">${b}</option>`).join('') +
-    '<option value="__new__">➕ Add new branch / specialization...</option>';
+    '<option value="__new__">+ Add new branch / specialization...</option>';
   brGrp.style.display = 'block';
   ssGrp.style.display = 'grid';
   ssGrp.style.gridTemplateColumns = '1fr 1fr';
@@ -2083,7 +2015,7 @@ async function saveNewUser() {
       password:pass,
     });
     closeModal('addUserModal');
-    toast(`✅ ${role} "${newUser.full_name}" saved! ID: ${id}`, 'success');
+    toast(` ${role} "${newUser.full_name}" saved! ID: ${id}`, 'success');
     ['mu_name','mu_id','mu_email','mu_pass'].forEach(x=>{ const el=document.getElementById(x); if(el) el.value=''; });
     document.getElementById('mu_course').value='';
     updateAdminBranches();
@@ -2114,7 +2046,7 @@ async function renderPending(c) {
       ${pending.length?`<button class="btn btn-success" onclick="approveAll()"><i class="fa-solid fa-check-double"></i> Approve All</button>`:''}
     </div>
     <div class="card">
-      ${!pending.length ? '<div class="empty-state"><i class="fa-solid fa-check-circle" style="color:var(--success);"></i><p>No pending approvals — all clear!</p></div>' :
+      ${!pending.length ? '<div class="empty-state"><i class="fa-solid fa-check-circle" style="color:var(--success);"></i><p>No pending approvals - all clear!</p></div>' :
         `<div class="tbl-wrap"><table class="tbl">
           <thead><tr><th>Name</th><th>Enrollment No.</th><th>Email</th><th>Department</th><th>Registered</th><th>Actions</th></tr></thead>
           <tbody>${pending.map(u=>`<tr>
@@ -2143,10 +2075,7 @@ async function deleteAndRefresh(id, name) {
 async function approveAll() {
   const data = await API.get('/users?status=pending&limit=500').catch(()=>({users:[]}));
   const pending = data.users||[];
-  if (!pending.length) { toast('No pending users','info'); return; }
-  if (!confirm(`Approve all ${pending.length} pending student(s)?`)) return;
   await Promise.all(pending.map(u => API.patch(`/users/${u.id}/status`,{status:'active'}).catch(()=>{})));
-  auditLog('bulk_approve',`${pending.length} students`,'All pending users approved at once');
   toast(`${pending.length} users approved!`,'success');
   updatePendingBadge();
   await renderPending(document.getElementById('adminContent'));
@@ -2175,7 +2104,7 @@ async function renderCourses(c) {
     </div>`;
 }
 
-/* Course modal — branch/section helpers */
+/* Course modal - branch/section helpers */
 function updateCourseBranches() {
   const prog = document.getElementById('mc_program').value;
   const brGrp = document.getElementById('mc_branch_group');
@@ -2183,7 +2112,7 @@ function updateCourseBranches() {
   const brSel = document.getElementById('mc_branch_sel');
   if (!prog) { brGrp.style.display='none'; ssSGrp.style.display='none'; return; }
   const branches = (typeof BRANCH_MAP !== 'undefined' ? BRANCH_MAP : {})[prog] || [];
-  brSel.innerHTML = '<option value="">— All branches / Select —</option>' +
+  brSel.innerHTML = '<option value="">- All branches / Select -</option>' +
     branches.map(b => `<option value="${b}">${b}</option>`).join('') +
     '<option value="__custom__">+ Add new branch...</option>';
   brGrp.style.display = 'block';
@@ -2240,9 +2169,9 @@ async function deleteCourse(id, name) {
   } catch(e) { toast(e.message,'error'); }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   TIMETABLE — Admin creates slots, faculty goes live
-══════════════════════════════════════════════════════════════ */
+/* ==============================================================
+   TIMETABLE - Admin creates slots, faculty goes live
+============================================================== */
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 async function renderTimetable(c) {
@@ -2303,7 +2232,7 @@ async function renderTimetable(c) {
                 <thead><tr><th>Time</th><th>Course</th><th>Branch</th><th>Section</th><th>Sem</th><th>Faculty</th><th>Room</th><th>Actions</th></tr></thead>
                 <tbody>
                   ${byDay[day].map(sl => `<tr class="tt-row" data-branch="${sl.branch||''}" data-section="${sl.section||''}" data-fac="${sl.faculty_id||''}">
-                    <td><strong>${sl.start_time} – ${sl.end_time}</strong></td>
+                    <td><strong>${sl.start_time} - ${sl.end_time}</strong></td>
                     <td>${sl.course_name||'?'}</td>
                     <td><span class="chip">${sl.branch||'-'}</span></td>
                     <td><span class="badge bg-blue">Sec ${sl.section||'-'}</span></td>
@@ -2332,7 +2261,7 @@ async function renderTimetable(c) {
           <div class="form-group">
             <label class="form-label">Course *</label>
             <select class="form-control form-select" id="sl_course">
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               ${courseList.map(co=>`<option value="${co.id}">${co.name} (${co.code})</option>`).join('')}
             </select>
           </div>
@@ -2351,7 +2280,7 @@ async function renderTimetable(c) {
           <div class="form-group">
             <label class="form-label">Faculty *</label>
             <select class="form-control form-select" id="sl_faculty">
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               ${facList.map(f=>`<option value="${f.id}">${f.full_name} (${f.inst_id})</option>`).join('')}
             </select>
           </div>
@@ -2366,7 +2295,7 @@ async function renderTimetable(c) {
             <div class="form-group" style="margin-bottom:8px;">
               <label class="form-label">Course / Program</label>
               <select class="form-control form-select" id="sl_course_prog" onchange="updateSlBranches()">
-                <option value="">— Select Course —</option>
+                <option value="">- Select Course -</option>
                 <option value="B.Tech">B.Tech</option>
                 <option value="B.E">B.E</option>
                 <option value="BCA">BCA</option>
@@ -2384,7 +2313,7 @@ async function renderTimetable(c) {
             <div class="form-group" style="margin-bottom:8px;">
               <label class="form-label">Branch / Specialization</label>
               <select class="form-control form-select" id="sl_branch">
-                <option value="">— Select branch —</option>
+                <option value="">- Select branch -</option>
               </select>
             </div>
             <div class="form-group" style="margin-bottom:8px;">
@@ -2468,7 +2397,7 @@ async function saveSlot() {
       room, branch, section, semester, course_type: courseType,
     });
     document.getElementById('addSlotModal').classList.remove('show');
-    toast('✅ Timetable slot added!','success');
+    toast(' Timetable slot added!','success');
     await renderTimetable(document.getElementById('adminContent'));
   } catch(e) { toast(e.message,'error'); }
 }
@@ -2482,7 +2411,7 @@ async function deleteSlot(id) {
   } catch(e) { toast(e.message,'error'); }
 }
 
-/* ══════════════════════════════════════════════════════════════ */
+/* ============================================================== */
 
 async function renderAllSessions(c) {
   const [sessions, courses, users] = await Promise.all([
@@ -2523,7 +2452,7 @@ async function renderReports(c) {
   const students = users.users||[];
   const closed   = (sessions.sessions||[]).filter(s=>s.status==='closed');
   c.innerHTML = `
-    <div class="page-header"><h2><i class="fa-solid fa-chart-bar" style="color:var(--accent);"></i> Attendance Reports</h2><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="printContent('Attendance Reports')"><i class="fa-solid fa-print"></i> Print</button><button class="btn btn-outline btn-sm" onclick="exportTableCSV(null,'report.csv')"><i class="fa-solid fa-download"></i> Export CSV</button></div></div>
+    <div class="page-header"><h2><i class="fa-solid fa-chart-bar" style="color:var(--accent);"></i> Attendance Reports</h2></div>
     <div class="card">
       <div class="section-title">Student-wise Attendance (${closed.length} closed sessions)</div>
       ${!students.length ? '<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>No students</p></div>' :
@@ -2573,8 +2502,8 @@ async function renderSettingsPage(c) {
       <div class="form-group">
         <label class="form-label"><i class="fa-solid fa-face-smile"></i> Face Verification Required?</label>
         <select class="form-control form-select" id="set_face">
-          <option value="true" ${s.face_required?'selected':''}>Yes — 75% of students must scan face</option>
-          <option value="false" ${!s.face_required?'selected':''}>No — QR + GPS only</option>
+          <option value="true" ${s.face_required?'selected':''}>Yes - 75% of students must scan face</option>
+          <option value="false" ${!s.face_required?'selected':''}>No - QR + GPS only</option>
         </select>
       </div>
       <button class="btn btn-primary" onclick="saveSettings()"><i class="fa-solid fa-save"></i> Save Settings</button>
@@ -2593,7 +2522,7 @@ async function saveSettings() {
   } catch(e) { toast(e.message,'error'); }
 }
 
-/* ═══════════════════════════ FACULTY ═══════════════════════════ */
+/* =========================== FACULTY =========================== */
 function initFaculty() {
   const u = currentUser;
   document.getElementById('facNameNav').textContent    = u.full_name.split(' ')[0];
@@ -2749,9 +2678,9 @@ async function renderFacDashboard(c) {
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:8px;">
         ${isExpanded ? `
-        <button onclick="facCalPrev()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:.85rem;">←</button>
+        <button onclick="facCalPrev()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:.85rem;"><-</button>
         <span style="font-weight:700;font-size:.95rem;color:var(--text);">${monthNames[mo]} ${yr}</span>
-        <button onclick="facCalNext()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:.85rem;">→</button>
+        <button onclick="facCalNext()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:.85rem;">-></button>
         ` : `
         <span style="font-weight:700;font-size:.95rem;color:var(--text);">
           Week of ${now.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
@@ -2804,11 +2733,11 @@ async function renderFacDashboard(c) {
           };
           const sc = statusMap[status] || statusMap.upcoming;
           return `<div style="display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);gap:12px;">
-            <div style="color:var(--muted);font-size:.8rem;min-width:90px;flex-shrink:0;">${sl.start_time}–${sl.end_time}</div>
+            <div style="color:var(--muted);font-size:.8rem;min-width:90px;flex-shrink:0;">${sl.start_time}-${sl.end_time}</div>
             <div style="flex:1;">
               <div style="font-weight:600;color:var(--text);font-size:.9rem;">${sl.course_name||'?'}</div>
               <div style="font-size:.76rem;color:var(--muted);margin-top:2px;">
-                ${sl.branch||''} ${sl.section?'· Sec '+sl.section:''} · ${sl.room||''}
+                ${sl.branch||''} ${sl.section?'&middot; Sec '+sl.section:''} &middot; ${sl.room||''}
               </div>
             </div>
             <div style="flex-shrink:0;">
@@ -2898,10 +2827,10 @@ function facSelectDay(d) {
       badgeHtml = `<span style="background:#d1fae5;color:#065f46;border-radius:20px;padding:3px 11px;font-size:.75rem;font-weight:600;">Conducted</span>`;
     }
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);gap:10px;">
-      <div style="color:var(--muted);font-size:.78rem;min-width:80px;flex-shrink:0;">${sl.start_time}–${sl.end_time}</div>
+      <div style="color:var(--muted);font-size:.78rem;min-width:80px;flex-shrink:0;">${sl.start_time}-${sl.end_time}</div>
       <div style="flex:1;">
         <div style="font-weight:600;color:var(--text);font-size:.88rem;">${sl.course_name||'?'}</div>
-        <div style="font-size:.75rem;color:var(--muted);margin-top:2px;">${sl.branch||''} ${sl.section?'· Sec '+sl.section:''} · ${sl.room||''}</div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:2px;">${sl.branch||''} ${sl.section?'&middot; Sec '+sl.section:''} &middot; ${sl.room||''}</div>
       </div>
       ${badgeHtml}
     </div>`;
@@ -2985,7 +2914,7 @@ async function renderFacTimetable(c) {
         html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);">';
         html += '<div>';
         html += '<div style="font-weight:600;">' + (sl.course_name||'?') + ' <span class="badge bg-blue">Sec ' + (sl.section||'-') + '</span></div>';
-        html += '<div style="font-size:.8rem;color:var(--muted);">' + sl.start_time + ' – ' + sl.end_time + ' &nbsp;·&nbsp; ' + (sl.room||'No room') + ' &nbsp;·&nbsp; ' + (sl.branch||'All branches') + '</div>';
+        html += '<div style="font-size:.8rem;color:var(--muted);">' + sl.start_time + ' - ' + sl.end_time + ' &nbsp;&middot;&nbsp; ' + (sl.room||'No room') + ' &nbsp;&middot;&nbsp; ' + (sl.branch||'All branches') + '</div>';
         html += '</div>';
         html += '<div style="display:flex;gap:8px;align-items:center;">' + actionHtml + '</div>';
         html += '</div>';
@@ -2998,9 +2927,9 @@ async function renderFacTimetable(c) {
 }
 
 
-/* ══════════════════════════════════════════════════
+/* ==================================================
    EXTRA / ONE-TIME CLASS
-══════════════════════════════════════════════════ */
+================================================== */
 async function openExtraClassModal() {
   // Load courses into dropdown
   const ec_course = document.getElementById('ec_course');
@@ -3009,7 +2938,7 @@ async function openExtraClassModal() {
   try {
     const courses = await API.get('/courses').catch(()=>[]);
     const list = Array.isArray(courses) ? courses : [];
-    ec_course.innerHTML = '<option value="">— Select course —</option>' +
+    ec_course.innerHTML = '<option value="">- Select course -</option>' +
       list.map(co => `<option value="${co.id}">${co.name} (${co.code})</option>`).join('');
   } catch(e) {
     ec_course.innerHTML = '<option value="">Failed to load courses</option>';
@@ -3020,13 +2949,13 @@ async function openExtraClassModal() {
   const cpEl = document.getElementById('ec_course_prog');
   if (cpEl) { cpEl.value = ''; }
   const brEl = document.getElementById('ec_branch');
-  if (brEl) brEl.innerHTML = '<option value="">— Select course first —</option>';
+  if (brEl) brEl.innerHTML = '<option value="">- Select course first -</option>';
   document.getElementById('ec_location').value = '';
   document.getElementById('ec_grace').value    = '15';
 
   // Try to get GPS now
   const gpsEl = document.getElementById('ec_gps_status');
-  if (gpsEl) gpsEl.textContent = '📍 Getting your location...';
+  if (gpsEl) gpsEl.textContent = ' Getting your location...';
   window._extraGpsLat = null;
   window._extraGpsLng = null;
 
@@ -3043,7 +2972,7 @@ async function openExtraClassModal() {
       () => {
         if (gpsEl) gpsEl.innerHTML =
           `<i class="fa-solid fa-triangle-exclamation" style="color:#f08e1b;"></i>
-           Location not available — GPS check will be skipped for this session.`;
+           Location not available - GPS check will be skipped for this session.`;
       },
       { timeout: 6000, enableHighAccuracy: true }
     );
@@ -3082,7 +3011,7 @@ async function saveExtraClass() {
     });
 
     closeModal('extraClassModal');
-    toast(`✅ Extra class "${title}" is now LIVE!`, 'success');
+    toast(` Extra class "${title}" is now LIVE!`, 'success');
 
     // Navigate to QR page to show the QR code
     facNav('qr');
@@ -3106,14 +3035,14 @@ async function goLive(slotId) {
     );
     gpsLat = pos.coords.latitude.toString();
     gpsLng = pos.coords.longitude.toString();
-    toast(`📍 Location captured: ${parseFloat(gpsLat).toFixed(4)}, ${parseFloat(gpsLng).toFixed(4)}`, 'success');
+    toast(` Location captured: ${parseFloat(gpsLat).toFixed(4)}, ${parseFloat(gpsLng).toFixed(4)}`, 'success');
   } catch(e) {
-    toast('GPS not available — attendance will work without location check', 'warning');
+    toast('GPS not available - attendance will work without location check', 'warning');
   }
   loading(false);
   try {
     const result = await API.post(`/timetable/${slotId}/go-live`, { gps_lat: gpsLat, gps_lng: gpsLng });
-    toast('🚀 Session is now LIVE! QR code is active.', 'success');
+    toast(' Session is now LIVE! QR code is active.', 'success');
     facNav('qr');
   } catch(e) { toast(e.message || 'Failed to go live', 'error'); }
 }
@@ -3152,7 +3081,7 @@ async function renderFacQR(c) {
     <div class="page-header"><h2><i class="fa-solid fa-qrcode" style="color:var(--accent);"></i> Live QR Code</h2></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;">
       <div class="card">
-        <div class="section-title"><i class="fa-solid fa-qrcode" style="color:var(--success);"></i> QR — Students Scan This</div>
+        <div class="section-title"><i class="fa-solid fa-qrcode" style="color:var(--success);"></i> QR - Students Scan This</div>
         <div class="qr-box">
           <div id="qrDisplay"></div>
           <div class="qr-timer" id="qrCountdown">${m0}:${s0.toString().padStart(2,'0')}</div>
@@ -3224,14 +3153,14 @@ async function renderFacAttendance(c) {
   cachedCourses = Array.isArray(courses)?courses:[];
   const ss = sessions.sessions||[];
   c.innerHTML = `
-    <div class="page-header"><h2><i class="fa-solid fa-clipboard-list" style="color:var(--accent);"></i> Attendance Sheet</h2><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="printContent('Attendance Sheet')"><i class="fa-solid fa-print"></i> Print</button><button class="btn btn-outline btn-sm" onclick="exportTableCSV(null,'attendance_sheet.csv')"><i class="fa-solid fa-download"></i> Export CSV</button></div></div>
+    <div class="page-header"><h2><i class="fa-solid fa-clipboard-list" style="color:var(--accent);"></i> Attendance Sheet</h2></div>
     <div class="card" style="margin-bottom:16px;">
       <label class="form-label">Select Session</label>
       <select class="form-control form-select" id="attSessionSel" onchange="loadAttSheet()" style="max-width:450px;">
-        <option value="">— Select a session —</option>
+        <option value="">- Select a session -</option>
         ${ss.map(s=>{ const co=cachedCourses.find(x=>x.id===s.course_id);
-          const info = [co?.name||'?', s.branch||'', s.section?'Sec '+s.section:''].filter(Boolean).join(' · ');
-          return `<option value="${s.id}" data-branch="${s.branch||''}" data-section="${s.section||''}">${s.title} — ${info} (${fmtDT(s.scheduled_at)})</option>`;
+          const info = [co?.name||'?', s.branch||'', s.section?'Sec '+s.section:''].filter(Boolean).join(' &middot; ');
+          return `<option value="${s.id}" data-branch="${s.branch||''}" data-section="${s.section||''}">${s.title} - ${info} (${fmtDT(s.scheduled_at)})</option>`;
         }).join('')}
       </select>
       <div id="sessionInfoBadge" style="margin-top:8px;"></div>
@@ -3256,7 +3185,7 @@ async function loadAttSheet() {
   // Show which class this is for
   if (infoBadge) {
     infoBadge.innerHTML = sessionBranch
-      ? `<span class="badge bg-blue"><i class="fa-solid fa-users"></i> ${sessionBranch}${sessionSection ? ' · Section '+sessionSection : ''}</span>
+      ? `<span class="badge bg-blue"><i class="fa-solid fa-users"></i> ${sessionBranch}${sessionSection ? ' &middot; Section '+sessionSection : ''}</span>
          <span style="font-size:.78rem;color:var(--muted);margin-left:6px;">Only students from this class are shown</span>`
       : '<span style="font-size:.78rem;color:var(--muted);">No branch filter set for this session</span>';
   }
@@ -3301,7 +3230,7 @@ async function loadAttSheet() {
             '<span class="badge bg-orange"><i class="fa-solid fa-clock"></i> Edit window open</span>'}
         </div>
         <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>#</th><th>Name</th><th>Enrollment No.</th><th>Branch</th><th>Sec</th><th>Status</th><th>Time</th><th>${isEditable ? 'Change' : '🔒'}</th></tr></thead>
+          <thead><tr><th>#</th><th>Name</th><th>Enrollment No.</th><th>Branch</th><th>Sec</th><th>Status</th><th>Time</th><th>${isEditable ? 'Change' : ''}</th></tr></thead>
           <tbody>${students.map((stu,i)=>{
             const rec = records.find(r=>r.student_id===stu.id);
             const status = rec?.status || 'absent';
@@ -3340,7 +3269,7 @@ async function openCreateSession() {
   const sel = document.getElementById('ms_course');
   sel.innerHTML = cachedCourses.length
     ? cachedCourses.map(c=>`<option value="${c.id}">${c.name} (${c.code})</option>`).join('')
-    : '<option value="">No courses available — ask admin to add courses</option>';
+    : '<option value="">No courses available - ask admin to add courses</option>';
   document.getElementById('ms_datetime').value = new Date().toISOString().slice(0,16);
   openModal('createSessionModal');
 }
@@ -3363,7 +3292,7 @@ async function saveNewSession() {
   finally { btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-save"></i> Create Session'; }
 }
 
-/* ═══════════════════════════ STUDENT ═══════════════════════════ */
+/* =========================== STUDENT =========================== */
 function initStudent() {
   const u = currentUser;
   document.getElementById('stuNameNav').textContent    = u.full_name.split(' ')[0];
@@ -3385,7 +3314,6 @@ async function stuNav(section) {
     timetable: renderStuTimetable,
     scan:      renderStuScan,
     history:   renderStuHistory,
-    calendar:  c => renderStuCalendar(c),
     profile:   (c) => renderProfile(c, currentUser),
   };
   if (renders[section]) await renders[section](c);
@@ -3412,11 +3340,11 @@ async function renderStuDashboard(c) {
   const markedPresentIds = new Set(att.filter(a=>a.status==='present').map(a=>a.session_id));
   const absent   = closed.filter(s => !markedPresentIds.has(s.id)).length;
 
-  // ── Calendar state ──────────────────────────────────────────────────────────
+  // -- Calendar state ----------------------------------------------------------
   if (!window._calYear)  window._calYear  = new Date().getFullYear();
   if (!window._calMonth) window._calMonth = new Date().getMonth(); // 0-indexed
 
-  // ── Build attendance map: date string → 'present'|'partial'|'absent'|'noclass' ──
+  // -- Build attendance map: date string -> 'present'|'partial'|'absent'|'noclass' --
   const attByDate = {};
   closed.forEach(s => {
     if (!s.started_at) return;
@@ -3428,7 +3356,7 @@ async function renderStuDashboard(c) {
     if (wasPresent) attByDate[key].present++;
   });
 
-  // ── Monthly stats (for selected calendar month) ──────────────────────────────
+  // -- Monthly stats (for selected calendar month) ------------------------------
   const yr = window._calYear, mo = window._calMonth;
   let monthPresent = 0, monthAbsent = 0;
   Object.entries(attByDate).forEach(([key, v]) => {
@@ -3439,7 +3367,7 @@ async function renderStuDashboard(c) {
     }
   });
 
-  // ── Today's schedule ─────────────────────────────────────────────────────────
+  // -- Today's schedule ---------------------------------------------------------
   const now      = new Date();
   const todayDay = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'][now.getDay()];
   const todaySlots = slots.filter(sl => (sl.day_of_week||'').toLowerCase() === todayDay)
@@ -3464,7 +3392,7 @@ async function renderStuDashboard(c) {
   const todayPresent  = todaySlots.filter(sl => slotStatus(sl)==='present').length;
   const todayUpcoming = todaySlots.filter(sl => slotStatus(sl)==='upcoming').length;
 
-  // ── Build calendar rows (full month) ─────────────────────────────────────────
+  // -- Build calendar rows (full month) -----------------------------------------
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const firstDay  = new Date(yr, mo, 1).getDay();
   const daysInMo  = new Date(yr, mo+1, 0).getDate();
@@ -3518,7 +3446,7 @@ async function renderStuDashboard(c) {
   const visibleRows = isExpanded ? allRows : [allRows[todayWeekRow] || allRows[0]];
   const calRows = visibleRows.map(r => `<tr>${r}</tr>`).join('');
 
-  // ── Render ────────────────────────────────────────────────────────────────────
+  // -- Render --------------------------------------------------------------------
   let html = `
 <div style="padding:0;max-width:900px;">
 
@@ -3540,9 +3468,9 @@ async function renderStuDashboard(c) {
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:8px;">
         ${isExpanded ? `
-        <button onclick="stuCalPrev()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:.85rem;">←</button>
+        <button onclick="stuCalPrev()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:.85rem;"><-</button>
         <span style="font-weight:700;font-size:.95rem;color:var(--text);">${monthNames[mo]} ${yr}</span>
-        <button onclick="stuCalNext()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:.85rem;">→</button>
+        <button onclick="stuCalNext()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:.85rem;">-></button>
         ` : `
         <span style="font-weight:700;font-size:.95rem;color:var(--text);">
           Week of ${now.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
@@ -3595,7 +3523,7 @@ async function renderStuDashboard(c) {
           const status = slotStatus(sl);
           const statusConfig = {
             present:  { label:'Present',  bg:'#d1fae5', color:'#065f46', border:'#2d9e6b' },
-            live:     { label:'Live ●',   bg:'#dbeafe', color:'#1e40af', border:'#3b82f6' },
+            live:     { label:'Live ',   bg:'#dbeafe', color:'#1e40af', border:'#3b82f6' },
             upcoming: { label:'Upcoming', bg:'var(--bg)', color:'var(--muted)', border:'var(--border)' },
             absent:   { label:'Absent',   bg:'#fee2e2', color:'#991b1b', border:'#e63946' },
             missed:   { label:'Missed',   bg:'#fef3c7', color:'#92400e', border:'#f08e1b' },
@@ -3603,10 +3531,10 @@ async function renderStuDashboard(c) {
           const sc = statusConfig[status] || statusConfig.upcoming;
           const isLive = actives.some(s => s.timetable_id === sl.id);
           return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);gap:12px;">
-            <div style="color:var(--muted);font-size:.8rem;min-width:80px;flex-shrink:0;">${sl.start_time}–${sl.end_time}</div>
+            <div style="color:var(--muted);font-size:.8rem;min-width:80px;flex-shrink:0;">${sl.start_time}-${sl.end_time}</div>
             <div style="flex:1;">
               <div style="font-weight:600;color:var(--text);font-size:.9rem;">${sl.course_name || '?'}</div>
-              <div style="font-size:.76rem;color:var(--muted);margin-top:2px;">${sl.faculty_name || ''} · ${sl.room || ''}</div>
+              <div style="font-size:.76rem;color:var(--muted);margin-top:2px;">${sl.faculty_name || ''} &middot; ${sl.room || ''}</div>
             </div>
             <div style="flex-shrink:0;">
               ${isLive && status !== 'present'
@@ -3660,7 +3588,7 @@ function stuSelectDay(d) {
   const dayName   = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'][selDate.getDay()];
   const dateLabel = selDate.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
-  // Get timetable slots for this day — match lowercase day_of_week
+  // Get timetable slots for this day - match lowercase day_of_week
   const daySlots = slots.filter(sl => (sl.day_of_week||'').toLowerCase() === dayName)
                         .sort((a,b) => a.start_time.localeCompare(b.start_time));
 
@@ -3711,10 +3639,10 @@ function stuSelectDay(d) {
       badgeHtml = `<span style="background:#fee2e2;color:#991b1b;border-radius:20px;padding:3px 11px;font-size:.75rem;font-weight:600;">Absent</span>`;
     }
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);gap:10px;">
-      <div style="color:var(--muted);font-size:.78rem;min-width:80px;flex-shrink:0;">${sl.start_time}–${sl.end_time}</div>
+      <div style="color:var(--muted);font-size:.78rem;min-width:80px;flex-shrink:0;">${sl.start_time}-${sl.end_time}</div>
       <div style="flex:1;">
         <div style="font-weight:600;color:var(--text);font-size:.88rem;">${sl.course_name || '?'}</div>
-        <div style="font-size:.75rem;color:var(--muted);margin-top:2px;">${sl.faculty_name || ''} · ${sl.room || ''}</div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:2px;">${sl.faculty_name || ''} &middot; ${sl.room || ''}</div>
       </div>
       ${badgeHtml}
     </div>`;
@@ -3754,7 +3682,7 @@ async function renderStuTimetable(c) {
   c.innerHTML = `
     <div class="page-header">
       <h2><i class="fa-solid fa-calendar-days" style="color:var(--accent);"></i> My Timetable</h2>
-      <div style="font-size:.82rem;color:var(--muted);">${branch} ${section ? '· Section '+section : ''}</div>
+      <div style="font-size:.82rem;color:var(--muted);">${branch} ${section ? '&middot; Section '+section : ''}</div>
     </div>
     ${!slotList.length ? `
       <div class="card" style="text-align:center;">
@@ -3762,7 +3690,7 @@ async function renderStuTimetable(c) {
           <i class="fa-solid fa-calendar-xmark"></i>
           <p>No timetable slots found.</p>
           <p style="font-size:.82rem;color:var(--muted);">
-            ${branch ? 'Branch: <strong>'+branch+'</strong>' : '<strong>Your branch/section is not set</strong> — please update your profile or ask admin.'}<br>
+            ${branch ? 'Branch: <strong>'+branch+'</strong>' : '<strong>Your branch/section is not set</strong> - please update your profile or ask admin.'}<br>
             Ask admin to add your class to the timetable.
           </p>
         </div>
@@ -3786,9 +3714,9 @@ async function renderStuTimetable(c) {
                   <div>
                     <div style="font-weight:600;">${sl.course_name || '?'}</div>
                     <div style="font-size:.8rem;color:var(--muted);">
-                      <i class="fa-solid fa-clock" style="width:14px;"></i> ${sl.start_time} – ${sl.end_time}
-                      &nbsp;·&nbsp; <i class="fa-solid fa-door-open" style="width:14px;"></i> ${sl.room || 'No room'}
-                      &nbsp;·&nbsp; <i class="fa-solid fa-chalkboard-user" style="width:14px;"></i> ${sl.faculty_name || '?'}
+                      <i class="fa-solid fa-clock" style="width:14px;"></i> ${sl.start_time} - ${sl.end_time}
+                      &nbsp;&middot;&nbsp; <i class="fa-solid fa-door-open" style="width:14px;"></i> ${sl.room || 'No room'}
+                      &nbsp;&middot;&nbsp; <i class="fa-solid fa-chalkboard-user" style="width:14px;"></i> ${sl.faculty_name || '?'}
                     </div>
                   </div>
                   <div>
@@ -3834,7 +3762,7 @@ async function renderStuScan(c) {
       <div class="card" style="max-width:500px;text-align:center;">
         <div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i>
           <p>No active session for your class right now.</p>
-          <p style="font-size:.82rem;color:var(--muted);">${branch} ${section ? '· Section '+section : ''}</p>
+          <p style="font-size:.82rem;color:var(--muted);">${branch} ${section ? '&middot; Section '+section : ''}</p>
           <p style="font-size:.82rem;color:var(--muted);">Your faculty needs to click <strong>Go Live</strong> from their timetable.</p>
         </div>
       </div>`; return;
@@ -3851,8 +3779,8 @@ async function renderStuScan(c) {
         <div class="empty-state" style="color:var(--success);">
           <i class="fa-solid fa-circle-check" style="font-size:3rem;"></i>
           <p style="font-size:1.1rem;font-weight:700;margin-top:8px;">Already Marked Present!</p>
-          <p style="color:var(--muted);">${active.title} — ${co?.name||''}</p>
-          <p style="font-size:.82rem;color:var(--muted);margin-top:4px;">Method: ${alreadyMarked.method} · ${fmtDT(alreadyMarked.marked_at)}</p>
+          <p style="color:var(--muted);">${active.title} - ${co?.name||''}</p>
+          <p style="font-size:.82rem;color:var(--muted);margin-top:4px;">Method: ${alreadyMarked.method} &middot; ${fmtDT(alreadyMarked.marked_at)}</p>
         </div>
       </div>`; return;
   }
@@ -3864,7 +3792,7 @@ async function renderStuScan(c) {
 
   c.innerHTML = `
     <div class="page-header"><h2><i class="fa-solid fa-qrcode" style="color:var(--accent);"></i> Mark Attendance</h2></div>
-    <div class="alert alert-info"><i class="fa-solid fa-circle-info"></i> <strong>Session:</strong> ${active.title} — ${co?.name||''} · ${active.location||''}</div>
+    <div class="alert alert-info"><i class="fa-solid fa-circle-info"></i> <strong>Session:</strong> ${active.title} - ${co?.name||''} &middot; ${active.location||''}</div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:20px;" id="scanFlow">
       <!-- Step 1: QR Camera Scanner -->
       <div class="scan-step" id="step1" style="max-width:480px;width:100%;">
@@ -3882,7 +3810,7 @@ async function renderStuScan(c) {
             <i class="fa-solid fa-spinner fa-spin"></i> Initialising camera...
           </div>
         </div>
-        <div id="qrScanMsg" style="margin-top:10px;font-size:.85rem;color:var(--muted);">Camera starting — allow access when prompted</div>
+        <div id="qrScanMsg" style="margin-top:10px;font-size:.85rem;color:var(--muted);">Camera starting - allow access when prompted</div>
       </div>
       <!-- Step 2: GPS -->
       <div class="scan-step pending" id="step2" style="max-width:480px;width:100%;">
@@ -3896,7 +3824,7 @@ async function renderStuScan(c) {
       <div class="scan-step pending" id="step3" style="max-width:480px;width:100%;">
         <div class="step-num" id="stepNum3">3</div>
         <h4 style="margin-bottom:8px;"><i class="fa-solid fa-face-smile" style="color:var(--success);"></i> Face Verification</h4>
-        <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px;">${faceReq?'Required to prevent proxy attendance':'Optional — face verification is disabled by admin'}</p>
+        <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px;">${faceReq?'Required to prevent proxy attendance':'Optional - face verification is disabled by admin'}</p>
         <div class="camera-box" id="camBox">
           <video id="faceCam" autoplay muted playsinline></video>
           <div class="cam-overlay" id="camOverlay"><i class="fa-solid fa-camera" style="margin-right:6px;"></i> Camera not started</div>
@@ -3914,7 +3842,7 @@ async function renderStuScan(c) {
   startQRScanner();
 }
 
-// ── QR CAMERA SCANNER ──
+// -- QR CAMERA SCANNER --
 let qrScanStream = null;
 let qrScanInterval = null;
 
@@ -3935,7 +3863,7 @@ async function startQRScanner() {
   }
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    if (status) status.textContent = '⚠ Camera not supported';
+    if (status) status.textContent = ' Camera not supported';
     if (msg) msg.textContent = 'Your browser does not support camera access.';
     return;
   }
@@ -3947,12 +3875,12 @@ async function startQRScanner() {
     video.srcObject = qrScanStream;
     await video.play();
     if (status) status.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--accent2);"></i> Scanning for QR...';
-    if (msg) msg.textContent = 'Point camera at the QR code — it will auto-detect';
+    if (msg) msg.textContent = 'Point camera at the QR code - it will auto-detect';
 
     // Scan every 250ms
     qrScanInterval = setInterval(() => scanQRFrame(video), 250);
   } catch (err) {
-    if (status) status.textContent = '⚠ Camera access denied';
+    if (status) status.textContent = ' Camera access denied';
     if (msg) msg.innerHTML = `Camera access denied.<br>Please allow camera in your browser settings.`;
   }
 }
@@ -3980,15 +3908,15 @@ function scanQRFrame(video) {
       if (qrScanStream) { qrScanStream.getTracks().forEach(t=>t.stop()); qrScanStream = null; }
       stuScanState.qrDone = true;
       markStep(1); unblockStep(2);
-      toast('✅ QR code scanned!','success');
+      toast(' QR code scanned!','success');
       const status = document.getElementById('qrScanStatus');
       const scanStep = document.getElementById('step1');
       if (status) status.innerHTML = '<i class="fa-solid fa-check-circle" style="color:var(--success);"></i> QR Verified!';
     } else {
-      // Wrong QR — show briefly but keep scanning
+      // Wrong QR - show briefly but keep scanning
       const status = document.getElementById('qrScanStatus');
       if (status) {
-        status.innerHTML = '<i class="fa-solid fa-xmark-circle" style="color:var(--accent2);"></i> Wrong QR — keep scanning...';
+        status.innerHTML = '<i class="fa-solid fa-xmark-circle" style="color:var(--accent2);"></i> Wrong QR - keep scanning...';
         setTimeout(() => {
           if (status) status.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--accent2);"></i> Scanning for QR...';
         }, 1500);
@@ -3998,7 +3926,7 @@ function scanQRFrame(video) {
 }
 
 function verifyQR() {
-  // Kept for fallback — not used in camera mode
+  // Kept for fallback - not used in camera mode
   const active = stuScanState.activeSession;
   if (!active) { toast('No active session','error'); return; }
   stuScanState.qrDone = true;
@@ -4006,11 +3934,11 @@ function verifyQR() {
   toast('QR verified!','success');
 }
 
-/* ─── GPS VERIFICATION ───────────────────────────────────────────
+/* --- GPS VERIFICATION -------------------------------------------
    Faculty GPS is set when they click Go Live (stored in session.gps_lat/gps_lng).
    Student GPS is compared against Faculty GPS using Haversine formula.
-   If student is outside allowed range → blocked from marking attendance.
-─────────────────────────────────────────────────────────────────── */
+   If student is outside allowed range -> blocked from marking attendance.
+------------------------------------------------------------------- */
 function haversineMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
   const toRad = x => x * Math.PI / 180;
@@ -4038,13 +3966,13 @@ function verifyGPS() {
 
   if (!navigator.geolocation) {
     if (!gpsEnabled) {
-      // No faculty GPS set — skip GPS check
+      // No faculty GPS set - skip GPS check
       stuScanState.gpsDone = true;
       stuScanState.stuLat  = null;
       stuScanState.stuLng  = null;
       btn.innerHTML = '<i class="fa-solid fa-check"></i> GPS Skipped';
       btn.className = 'btn btn-outline'; btn.disabled = true;
-      status.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">GPS not available — skipped by system</div>';
+      status.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">GPS not available - skipped by system</div>';
       markStep(2); unblockStep(3);
     } else {
       status.innerHTML = '<div style="color:var(--accent2);font-weight:600;"><i class="fa-solid fa-xmark-circle"></i> GPS not supported on this device. Cannot verify location.</div>';
@@ -4063,7 +3991,7 @@ function verifyGPS() {
       stuScanState.stuLng = stuLng.toString();
 
       if (!gpsEnabled) {
-        // Faculty didn't set GPS — allow but note it
+        // Faculty didn't set GPS - allow but note it
         stuScanState.gpsDone = true;
         btn.innerHTML = '<i class="fa-solid fa-check"></i> Location Captured';
         btn.className = 'btn btn-success'; btn.disabled = true;
@@ -4073,11 +4001,11 @@ function verifyGPS() {
         return;
       }
 
-      // ── Real distance check against FACULTY GPS ──
+      // -- Real distance check against FACULTY GPS --
       const distance = Math.round(haversineMeters(facLat, facLng, stuLat, stuLng));
 
       if (distance > range) {
-        // FAIL — too far
+        // FAIL - too far
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Try Again';
         btn.className = 'btn btn-danger';
@@ -4085,19 +4013,19 @@ function verifyGPS() {
           <i class="fa-solid fa-circle-xmark"></i> You are <strong>${distance}m</strong> away from classroom.
           Must be within <strong>${range}m</strong>. Please move closer and try again.
         </div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:4px;">GPS accuracy: ±${accuracy}m</div>`;
-        toast(`❌ Too far! ${distance}m away. Allowed: ${range}m`, 'error');
+        <div style="font-size:.78rem;color:var(--muted);margin-top:4px;">GPS accuracy: +/-${accuracy}m</div>`;
+        toast(` Too far! ${distance}m away. Allowed: ${range}m`, 'error');
       } else {
-        // PASS — within range
+        // PASS - within range
         stuScanState.gpsDone = true;
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> In Range ✓';
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> In Range ';
         btn.className = 'btn btn-success'; btn.disabled = true;
         status.innerHTML = `<div style="color:var(--success);">
-          <i class="fa-solid fa-circle-check"></i> You are <strong>${distance}m</strong> away — within ${range}m range ✓
+          <i class="fa-solid fa-circle-check"></i> You are <strong>${distance}m</strong> away - within ${range}m range 
         </div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:4px;">GPS accuracy: ±${accuracy}m</div>`;
+        <div style="font-size:.78rem;color:var(--muted);margin-top:4px;">GPS accuracy: +/-${accuracy}m</div>`;
         markStep(2); unblockStep(3);
-        toast(`✅ Location verified! ${distance}m from classroom`, 'success');
+        toast(` Location verified! ${distance}m from classroom`, 'success');
       }
     },
     (err) => {
@@ -4107,14 +4035,14 @@ function verifyGPS() {
         stuScanState.stuLat  = null; stuScanState.stuLng = null;
         btn.innerHTML = '<i class="fa-solid fa-check"></i> GPS Skipped';
         btn.className = 'btn btn-outline'; btn.disabled = true;
-        status.innerHTML = '<div style="color:var(--muted);">Location access denied — GPS check skipped (no faculty GPS set)</div>';
+        status.innerHTML = '<div style="color:var(--muted);">Location access denied - GPS check skipped (no faculty GPS set)</div>';
         markStep(2); unblockStep(3);
       } else {
         btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Try Again';
         status.innerHTML = `<div style="color:var(--accent2);">
           <i class="fa-solid fa-xmark-circle"></i> Location access denied.
           Please allow location in your browser settings and try again.
-          (Faculty GPS is set — location check is required)
+          (Faculty GPS is set - location check is required)
         </div>`;
         toast('Location access denied. Allow GPS and try again.', 'error');
       }
@@ -4136,7 +4064,7 @@ function startCam() {
     document.getElementById('captureBtn').style.display='inline-flex';
     document.getElementById('camBtn').style.display='none';
   }).catch(()=>{
-    toast('Camera denied — click Capture to simulate for demo','warning');
+    toast('Camera denied - click Capture to simulate for demo','warning');
     document.getElementById('captureBtn').style.display='inline-flex';
     document.getElementById('camBtn').style.display='none';
   });
@@ -4186,7 +4114,7 @@ async function captureFace() {
     if (camStream) { camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
     stuScanState.faceDone = true;
     markStep(3);
-    toast(`✅ Face verified! (${similarity.toFixed(0)}% match)`,'success');
+    toast(` Face verified! (${similarity.toFixed(0)}% match)`,'success');
     await doMarkAttendance();
   } catch(e) {
     console.error('Face verification error:', e);
@@ -4213,7 +4141,7 @@ async function doMarkAttendance() {
     if (result) {
       result.innerHTML = `
         <div class="card" style="max-width:480px;margin:20px auto;text-align:center;border:2px solid var(--success);background:linear-gradient(135deg,#f0fdf4,#fff);">
-          <div style="font-size:3rem;margin-bottom:12px;">✅</div>
+          <div style="font-size:3rem;margin-bottom:12px;"></div>
           <div style="font-size:1.3rem;font-weight:800;color:var(--success);">Attendance Marked!</div>
           <div style="color:var(--muted);margin-top:8px;">Marked present via QR + GPS + Face</div>
           <div style="margin-top:8px;font-size:.82rem;color:var(--muted);">${new Date().toLocaleTimeString('en-IN')}</div>
@@ -4221,7 +4149,7 @@ async function doMarkAttendance() {
         </div>`;
     }
     document.getElementById('scanFlow')?.remove();
-    toast('🎉 Attendance marked successfully!','success');
+    toast(' Attendance marked successfully!','success');
   } catch(e) {
     toast(e.message||'Failed to mark attendance','error');
   }
@@ -4253,7 +4181,7 @@ async function renderStuHistory(c) {
   const present= att.filter(a=>a.status==='present').length;
   const p      = pct(present, closed.length);
   c.innerHTML  = `
-    <div class="page-header"><h2><i class="fa-solid fa-history" style="color:var(--accent);"></i> Attendance History</h2><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="stuNav('calendar')"><i class="fa-solid fa-calendar-days"></i> Calendar</button><button class="btn btn-outline btn-sm" onclick="exportAttendanceCSV(att,ss,cs,'my_attendance.csv')"><i class="fa-solid fa-download"></i> Export CSV</button><button class="btn btn-outline btn-sm" onclick="printContent('Attendance History')"><i class="fa-solid fa-print"></i> Print</button></div></div>
+    <div class="page-header"><h2><i class="fa-solid fa-history" style="color:var(--accent);"></i> Attendance History</h2></div>
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-icon" style="background:#d1fae5;"><i class="fa-solid fa-user-check" style="color:#065f46;"></i></div><div><div class="stat-val">${present}</div><div class="stat-lbl">Present</div></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:#fee2e2;"><i class="fa-solid fa-user-xmark" style="color:#991b1b;"></i></div><div><div class="stat-val">${closed.length-present}</div><div class="stat-lbl">Absent</div></div></div>
@@ -4282,7 +4210,7 @@ async function renderStuHistory(c) {
     </div>`;
 }
 
-/* ═══════════════════════════ SHARED PROFILE ═══════════════════════════ */
+/* =========================== SHARED PROFILE =========================== */
 async function renderProfile(c, user) {
   c.innerHTML = `
     <div class="page-header"><h2><i class="fa-solid fa-user-circle" style="color:var(--accent);"></i> My Profile</h2></div>
@@ -4348,7 +4276,7 @@ async function changePassword() {
   } catch(e) { toast(e.message,'error'); }
 }
 
-/* ═══════════════════════════ INIT ═══════════════════════════ */
+/* =========================== INIT =========================== */
 window.addEventListener('DOMContentLoaded', () => {
   // Close modals on overlay click
   document.querySelectorAll('.modal-overlay').forEach(m => {
@@ -4377,7 +4305,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// ── Face API Global State ─────────────────────────────────────────────────
+// -- Face API Global State -------------------------------------------------
 let faceApiReady = false;
 let faceSetupStream = null;
 
@@ -4439,10 +4367,10 @@ async function faceSetupDetectionLoop() {
     .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
     .withFaceLandmarks();
   if (detection) {
-    if (status) status.innerHTML = '<span style="color:var(--success)">✅ Face detected — ready to capture!</span>';
+    if (status) status.innerHTML = '<span style="color:var(--success)"> Face detected - ready to capture!</span>';
     if (btn) btn.disabled = false;
   } else {
-    if (status) status.textContent = '👤 No face detected — look directly at camera';
+    if (status) status.textContent = ' No face detected - look directly at camera';
   }
   if (document.getElementById('faceSetupPage')?.classList.contains('active')) {
     setTimeout(faceSetupDetectionLoop, 800);
@@ -4503,251 +4431,8 @@ function proceedToPortal() {
   initStudent();
 }
 
-
-/* ═══════════════ FORGOT PASSWORD OTP ═══════════════ */
-let _fp_email='',_fp_resetToken='',_fp_timerID=null;
-function openForgotPassword(){
-  _fp_email='';_fp_resetToken='';
-  ['fp_email','fp_otp','fp_newpass','fp_newpass2'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  fpShowStep(1);openModal('forgotModal');
-}
-function fpShowStep(n){[1,2,3,4].forEach(i=>{const e=document.getElementById('fp-step'+i);if(e)e.style.display=i===n?'block':'none';});}
-async function fpSendOtp(){
-  const email=document.getElementById('fp_email').value.trim();
-  if(!email){toast('Enter your email or enrollment number','warning');return;}
-  const btn=document.getElementById('fp_sendBtn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Sending...';
-  try{
-    const res=await API.post('/auth/forgot-password/send-otp',{email});
-    _fp_email=res.email||email;
-    if(res.dev_otp){toast(`Dev OTP: ${res.dev_otp}`,'warning');console.log('[DEV OTP]',res.dev_otp);}
-    document.getElementById('fp_emailDisplay').textContent=_fp_email;
-    fpShowStep(2);fpStartTimer(600);
-    setTimeout(()=>document.getElementById('fp_otp').focus(),100);
-  }catch(e){toast(e.message||'Failed to send OTP','error');}
-  finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane"></i> Send OTP';}
-}
-function fpStartTimer(sec){
-  if(_fp_timerID)clearInterval(_fp_timerID);
-  let r=sec;const el=document.getElementById('fp_timer');
-  const tick=()=>{const m=Math.floor(r/60).toString().padStart(2,'0'),s=(r%60).toString().padStart(2,'0');if(el)el.textContent=`${m}:${s}`;if(r<=0){clearInterval(_fp_timerID);if(el)el.textContent='Expired';}r--;};
-  tick();_fp_timerID=setInterval(tick,1000);
-}
-async function fpVerifyOtp(){
-  const otp=document.getElementById('fp_otp').value.trim();
-  if(otp.length!==6){toast('Enter the 6-digit OTP','warning');return;}
-  const btn=document.getElementById('fp_verifyBtn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Verifying...';
-  try{
-    const res=await API.post('/auth/forgot-password/verify-otp',{email:_fp_email,otp});
-    _fp_resetToken=res.reset_token;clearInterval(_fp_timerID);fpShowStep(3);
-    setTimeout(()=>document.getElementById('fp_newpass').focus(),100);toast('OTP verified!','success');
-  }catch(e){toast(e.message||'Invalid OTP','error');document.getElementById('fp_otp').value='';document.getElementById('fp_otp').focus();}
-  finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-check"></i> Verify OTP';}
-}
-async function fpResend(){document.getElementById('fp_otp').value='';await fpSendOtp();}
-async function fpResetPassword(){
-  const p1=document.getElementById('fp_newpass').value,p2=document.getElementById('fp_newpass2').value;
-  if(p1.length<6){toast('Password must be at least 6 characters','warning');return;}
-  if(p1!==p2){toast('Passwords do not match','warning');return;}
-  const btn=document.getElementById('fp_resetBtn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Resetting...';
-  try{
-    await API.post('/auth/forgot-password/reset',{email:_fp_email,reset_token:_fp_resetToken,new_password:p1});
-    fpShowStep(4);toast('Password reset!','success');
-  }catch(e){toast(e.message||'Reset failed','error');}
-  finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-check-circle"></i> Reset Password';}
-}
-
-/* ═══════════════ CSV EXPORT ═══════════════ */
-function exportTableCSV(tableId, filename) {
-  const table = tableId ? document.getElementById(tableId) : document.querySelector('.tbl-wrap table');
-  if (!table) { toast('No table found to export','warning'); return; }
-  const rows = [...table.querySelectorAll('tr')];
-  const csv = rows.map(r=>[...r.querySelectorAll('th,td')].map(cell=>`"${cell.innerText.replace(/"/g,'""').trim()}"`).join(',')).join('
-');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download = filename||'export.csv'; a.click();
-  toast('CSV downloaded!','success');
-}
-
-function exportAttendanceCSV(records, sessions, courses, filename) {
-  const ss=Array.isArray(sessions)?sessions:(sessions?.sessions||[]);
-  const cs=Array.isArray(courses)?courses:[];
-  const rows=[['Date','Course','Session','Status','Method'],...records.map(a=>{
-    const s=ss.find(x=>x.id===a.session_id),co=cs.find(x=>x.id===s?.course_id);
-    return [fmtDT(a.marked_at),co?.name||'Unknown',s?.title||'?',a.status,a.method];
-  })].map(r=>r.map(c=>`"${c}"`).join(',')).join('
-');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([rows],{type:'text/csv'}));
-  a.download=filename||'attendance.csv'; a.click();
-  toast('CSV exported!','success');
-}
-
-/* ═══════════════ PRINT ═══════════════ */
-function printContent(title) {
-  const main=document.querySelector('.main-content');
-  if(!main){window.print();return;}
-  const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><title>${title||'Report'}</title>
-    <style>body{font-family:Arial,sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}
-    th,td{border:1px solid #ddd;padding:8px;font-size:12px;}th{background:#1a3c6e;color:#fff;}
-    .badge{padding:2px 8px;border-radius:10px;font-size:11px;}
-    .bg-green{background:#d1fae5;}.bg-red{background:#fee2e2;}.bg-orange{background:#fef3c7;}
-    button,.btn,.ham-btn{display:none!important;}</style></head>
-    <body><h2 style="color:#1a3c6e;">Smart Attendance — TMU</h2>
-    <p style="color:#666;font-size:12px;">Printed: ${new Date().toLocaleString('en-IN')}</p>
-    ${main.innerHTML}</body></html>`);
-  w.document.close(); setTimeout(()=>w.print(),600);
-}
-
-/* ═══════════════ STUDENT CALENDAR VIEW ═══════════════ */
-let _calYear=new Date().getFullYear(),_calMonth=new Date().getMonth(),_calAttData=null,_calSessions=null;
-
-async function renderStuCalendar(c) {
-  loading(true,'Loading calendar...');
-  const branch=currentUser.branch||currentUser.department||'',section=currentUser.section||'';
-  const [attData,sessData]=await Promise.all([
-    API.get(`/attendance/student/${currentUser.id}?limit=500`).catch(()=>({records:[]})),
-    API.get(`/sessions?limit=500&branch=${encodeURIComponent(branch)}&section=${encodeURIComponent(section)}`).catch(()=>({sessions:[]})),
-  ]);
-  _calAttData=attData.records||[];_calSessions=sessData.sessions||[];
-  loading(false);
-  _calYear=new Date().getFullYear();_calMonth=new Date().getMonth();
-  c.innerHTML=`
-    <div class="page-header">
-      <h2><i class="fa-solid fa-calendar-days" style="color:var(--accent);"></i> Attendance Calendar</h2>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-outline btn-sm" onclick="exportAttendanceCSV(_calAttData,_calSessions||[],[],'my_attendance.csv')"><i class="fa-solid fa-download"></i> Export CSV</button>
-        <button class="btn btn-outline btn-sm" onclick="printContent('Attendance Calendar')"><i class="fa-solid fa-print"></i> Print</button>
-      </div>
-    </div>
-    <div class="card" style="margin-bottom:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <button class="btn btn-outline btn-sm" onclick="calPrev()"><i class="fa-solid fa-chevron-left"></i></button>
-        <div id="calMonthTitle" style="font-size:1rem;font-weight:700;"></div>
-        <button class="btn btn-outline btn-sm" onclick="calNext()"><i class="fa-solid fa-chevron-right"></i></button>
-      </div>
-      <div id="calGrid"></div>
-      <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;font-size:.8rem;">
-        <span><span style="display:inline-block;width:12px;height:12px;background:#d1fae5;border-radius:3px;margin-right:4px;"></span>Present</span>
-        <span><span style="display:inline-block;width:12px;height:12px;background:#fee2e2;border-radius:3px;margin-right:4px;"></span>Absent</span>
-        <span><span style="display:inline-block;width:12px;height:12px;background:#fef3c7;border-radius:3px;margin-right:4px;"></span>Late</span>
-        <span><span style="display:inline-block;width:12px;height:12px;background:var(--border);border-radius:3px;margin-right:4px;"></span>No class</span>
-      </div>
-    </div>`;
-  renderCalGrid();
-}
-
-function renderCalGrid(){
-  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('calMonthTitle').textContent=`${months[_calMonth]} ${_calYear}`;
-  const first=new Date(_calYear,_calMonth,1).getDay(),days=new Date(_calYear,_calMonth+1,0).getDate();
-  const dateMap={};
-  (_calAttData||[]).forEach(a=>{const d=new Date(a.marked_at).toDateString();if(!dateMap[d]||a.status==='present')dateMap[d]=a.status;});
-  (_calSessions||[]).filter(s=>s.status==='closed').forEach(s=>{const d=new Date(s.started_at||s.scheduled_at).toDateString();if(!dateMap[d])dateMap[d]='session_no_att';});
-  let h=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">`;
-  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>h+=`<div style="text-align:center;font-size:.72rem;font-weight:700;color:var(--muted);padding:4px 0;">${d}</div>`);
-  for(let i=0;i<first;i++)h+=`<div></div>`;
-  for(let d=1;d<=days;d++){
-    const ds=new Date(_calYear,_calMonth,d).toDateString(),status=dateMap[ds],isToday=new Date().toDateString()===ds;
-    let bg='transparent',color='var(--text)',border=isToday?'2px solid var(--primary)':'1px solid var(--border)';
-    if(status==='present'){bg='#d1fae5';color='#065f46';}
-    else if(status==='absent'||status==='session_no_att'){bg='#fee2e2';color='#991b1b';}
-    else if(status==='late'){bg='#fef3c7';color='#92400e';}
-    h+=`<div style="text-align:center;padding:8px 4px;border-radius:6px;background:${bg};color:${color};border:${border};font-size:.82rem;font-weight:${isToday?'700':'400'};">${d}</div>`;
-  }
-  h+=`</div>`;
-  document.getElementById('calGrid').innerHTML=h;
-}
-function calPrev(){_calMonth--;if(_calMonth<0){_calMonth=11;_calYear--;}renderCalGrid();}
-function calNext(){_calMonth++;if(_calMonth>11){_calMonth=0;_calYear++;}renderCalGrid();}
-
-/* ═══════════════ DEFAULTER LIST ═══════════════ */
-async function renderDefaulters(c){
-  loading(true,'Calculating attendance...');
-  const [usersData,sessData,attData]=await Promise.all([
-    API.get('/users?role=student&limit=500').catch(()=>({users:[]})),
-    API.get('/sessions?limit=500').catch(()=>({sessions:[]})),
-    API.get('/attendance?limit=2000').catch(()=>({records:[]})),
-  ]);
-  const students=usersData.users||[],sessions=(sessData.sessions||[]).filter(s=>s.status==='closed'),records=attData.records||[];
-  loading(false);
-  const defaulters=students.map(stu=>{
-    const sr=records.filter(r=>r.student_id===stu.id),present=sr.filter(r=>r.status==='present'||r.status==='late').length;
-    const pct_val=sessions.length?Math.round((present/sessions.length)*100):100;
-    return{...stu,present,total:sessions.length,pct_val};
-  }).filter(s=>s.pct_val<75).sort((a,b)=>a.pct_val-b.pct_val);
-  c.innerHTML=`
-    <div class="page-header">
-      <h2><i class="fa-solid fa-triangle-exclamation" style="color:var(--accent2);"></i> Defaulter List <span class="badge bg-red">${defaulters.length}</span></h2>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-outline btn-sm" onclick="printContent('Defaulter List')"><i class="fa-solid fa-print"></i> Print</button>
-        <button class="btn btn-outline btn-sm" onclick="exportTableCSV('defaultersTable','defaulters.csv')"><i class="fa-solid fa-download"></i> CSV</button>
-      </div>
-    </div>
-    <div class="alert alert-warning"><i class="fa-solid fa-info-circle"></i> Students with attendance below 75% — ${defaulters.length} student(s) at risk</div>
-    <div class="card">
-      ${!defaulters.length?'<div class="empty-state"><i class="fa-solid fa-check-circle" style="color:var(--success);"></i><p>No defaulters — all students above 75%!</p></div>':
-        `<div class="tbl-wrap"><table class="tbl" id="defaultersTable">
-          <thead><tr><th>Name</th><th>ID</th><th>Department</th><th>Present</th><th>Total</th><th>Attendance %</th></tr></thead>
-          <tbody>${defaulters.map(s=>`<tr>
-            <td><strong>${s.full_name}</strong></td><td><code>${s.inst_id}</code></td>
-            <td>${s.department||'-'}</td><td>${s.present}</td><td>${s.total}</td>
-            <td><span class="badge ${s.pct_val<50?'bg-red':'bg-orange'}">${s.pct_val}%</span>
-              <div class="pct-bar" style="margin-top:4px;"><div class="pct-bar-fill danger" style="width:${s.pct_val}%;"></div></div></td>
-          </tr>`).join('')}</tbody>
-        </table></div>`}
-    </div>`;
-}
-
-/* ═══════════════ AUDIT LOG ═══════════════ */
-function auditLog(action,target,detail){
-  if(!currentUser)return;
-  API.post('/audit/log',{action,target,detail,by:`${currentUser.full_name} (${currentUser.inst_id})`}).catch(()=>{});
-}
-async function renderAuditLog(c){
-  const logs=await API.get('/audit/log').catch(()=>[]);
-  c.innerHTML=`
-    <div class="page-header">
-      <h2><i class="fa-solid fa-clipboard-list" style="color:var(--primary);"></i> Audit Log</h2>
-      <button class="btn btn-outline btn-sm" onclick="printContent('Audit Log')"><i class="fa-solid fa-print"></i> Print</button>
-    </div>
-    <div class="card">
-      ${!logs.length?'<div class="empty-state"><i class="fa-solid fa-clipboard"></i><p>No audit entries yet</p></div>':
-        `<div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>Time</th><th>Action</th><th>By</th><th>Target</th><th>Detail</th></tr></thead>
-          <tbody>${logs.map(l=>`<tr>
-            <td style="font-size:.78rem;white-space:nowrap;">${l.timestamp}</td>
-            <td><span class="badge ${l.action.includes('delete')||l.action.includes('reject')?'bg-red':l.action.includes('approve')?'bg-green':'bg-blue'}">${l.action}</span></td>
-            <td>${l.by}</td><td>${l.target}</td>
-            <td style="font-size:.82rem;color:var(--muted);">${l.detail}</td>
-          </tr>`).join('')}</tbody>
-        </table></div>`}
-    </div>`;
-}
-
-/* ═══════════════ PWA ═══════════════ */
-function setupPWA(){
-  const manifest={name:"Smart Attendance — TMU",short_name:"Attendance",start_url:"/",display:"standalone",
-    background_color:"#1a3c6e",theme_color:"#1a3c6e",description:"Smart Attendance System — TMU",
-    icons:[{src:"https://ui-avatars.com/api/?name=SA&background=1a3c6e&color=fff&size=192",sizes:"192x192",type:"image/png"},
-           {src:"https://ui-avatars.com/api/?name=SA&background=1a3c6e&color=fff&size=512",sizes:"512x512",type:"image/png"}]};
-  const link=document.getElementById('pwa-manifest');
-  if(link)link.href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/json'}));
-  let deferredPrompt=null;
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const b=document.getElementById('pwaInstallBtn');if(b)b.style.display='flex';});
-  window.addEventListener('appinstalled',()=>{toast('App installed!','success');deferredPrompt=null;});
-  window.pwaInstall=async()=>{
-    if(deferredPrompt){deferredPrompt.prompt();const r=await deferredPrompt.userChoice;if(r.outcome==='accepted')toast('Installing...','success');deferredPrompt=null;}
-    else toast('To install: tap browser menu → Add to Home Screen','info');
-  };
-}
-
+// Pre-load face-api models in background after page load
 window.addEventListener('load', () => {
-  setupPWA();
   setTimeout(() => loadFaceApiModels().catch(()=>{}), 3000);
 });
 
