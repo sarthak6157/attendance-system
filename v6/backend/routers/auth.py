@@ -2,6 +2,7 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from core.branches import upsert_branch
 from core.security import create_access_token, get_current_user, hash_password, verify_password
 from db.database import get_db
 from models.models import User, UserRole, UserStatus
@@ -51,6 +52,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
         course=getattr(payload, 'course_type', None),
     )
     db.add(new_user)
+    upsert_branch(db, getattr(payload, "course_type", None), new_user.branch)
     db.commit()
     db.refresh(new_user)
     return new_user

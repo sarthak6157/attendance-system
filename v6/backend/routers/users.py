@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from core.branches import upsert_branch
 from core.security import get_current_user, hash_password, require_roles
 from db.database import get_db
 from models.models import User, UserRole, UserStatus
@@ -52,7 +53,9 @@ def admin_create_user(payload: UserCreate, _: User = Depends(AdminOnly), db: Ses
         section=payload.section, semester=payload.semester,
         course=getattr(payload, 'course_type', None),
     )
-    db.add(new_user); db.commit(); db.refresh(new_user)
+    db.add(new_user)
+    upsert_branch(db, getattr(payload, "course_type", None), new_user.branch)
+    db.commit(); db.refresh(new_user)
     return new_user
 
 

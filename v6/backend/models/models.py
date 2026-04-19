@@ -83,6 +83,15 @@ class Course(Base):
     timetable_slots = relationship("TimetableSlot", back_populates="course")
 
 
+class Branch(Base):
+    __tablename__ = "branches"
+    __table_args__ = (UniqueConstraint("course", "branch", name="uq_branch_course_branch"),)
+    id         = Column(Integer, primary_key=True, index=True)
+    course     = Column(String(100), nullable=False, index=True)
+    branch     = Column(String(150), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class TimetableSlot(Base):
     """A recurring weekly class slot — created by admin."""
     __tablename__ = "timetable_slots"
