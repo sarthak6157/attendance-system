@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Smart Attendance System — TMU</title>
+<link rel="manifest" id="pwa-manifest">
+<meta name="theme-color" content="#1a3c6e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Attendance TMU">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -782,10 +788,56 @@ button, input, select, textarea { font-family: inherit; }
     <button class="btn btn-primary" id="loginBtn" style="width:100%;justify-content:center;padding:12px;" onclick="doLogin()">
       <i class="fa-solid fa-right-to-bracket"></i> Login
     </button>
-    <div style="text-align:center;margin-top:16px;font-size:.85rem;color:var(--muted);">
+    <div style="text-align:center;margin-top:10px;">
+      <a href="#" onclick="openForgotPassword()" style="font-size:.83rem;color:var(--accent2);font-weight:600;"><i class="fa-solid fa-key" style="font-size:.75rem;"></i> Forgot password?</a>
+    </div>
+    <div style="text-align:center;margin-top:8px;font-size:.85rem;color:var(--muted);">
       Don't have an account? <a href="#" onclick="showPage('registerPage')" style="color:var(--primary);font-weight:600;">Register here</a>
     </div>
 
+  </div>
+</div>
+
+<!-- ═══════════════ FORGOT PASSWORD MODAL ═══════════════ -->
+<div class="modal-overlay" id="forgotModal">
+  <div class="modal-box" style="max-width:420px;">
+    <div id="fp-step1">
+      <h3 style="margin-bottom:4px;"><i class="fa-solid fa-key" style="color:var(--accent);"></i> Forgot Password</h3>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:18px;">Enter your registered email or Enrollment No.</p>
+      <div class="form-group"><label class="form-label">Email / Enrollment No.</label>
+        <div class="input-icon"><i class="fa-solid fa-envelope"></i>
+          <input class="form-control" id="fp_email" placeholder="your@email.com or TCA2559184" style="padding-left:36px;"></div></div>
+      <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('forgotModal')">Cancel</button>
+        <button class="btn btn-accent" id="fp_sendBtn" onclick="fpSendOtp()"><i class="fa-solid fa-paper-plane"></i> Send OTP</button></div>
+    </div>
+    <div id="fp-step2" style="display:none;">
+      <h3 style="margin-bottom:4px;"><i class="fa-solid fa-shield-halved" style="color:var(--success);"></i> Enter OTP</h3>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:6px;">Sent to <strong id="fp_emailDisplay"></strong></p>
+      <div class="alert alert-info" style="margin-bottom:14px;font-size:.82rem;"><i class="fa-solid fa-clock"></i> Expires in <span id="fp_timer" style="font-weight:700;">10:00</span></div>
+      <input class="form-control" id="fp_otp" maxlength="6" placeholder="6-digit OTP"
+        style="font-size:1.6rem;letter-spacing:10px;text-align:center;font-weight:700;margin-bottom:14px;"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'');if(this.value.length===6)fpVerifyOtp()">
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-sm" onclick="fpResend()"><i class="fa-solid fa-rotate"></i> Resend</button>
+        <button class="btn btn-primary" id="fp_verifyBtn" onclick="fpVerifyOtp()"><i class="fa-solid fa-check"></i> Verify OTP</button></div>
+    </div>
+    <div id="fp-step3" style="display:none;">
+      <h3 style="margin-bottom:4px;"><i class="fa-solid fa-lock" style="color:var(--primary);"></i> Set New Password</h3>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:18px;">OTP verified! Choose a strong new password.</p>
+      <div class="form-group"><label class="form-label">New Password</label>
+        <input class="form-control" id="fp_newpass" type="password" placeholder="Min 6 characters"></div>
+      <div class="form-group"><label class="form-label">Confirm Password</label>
+        <input class="form-control" id="fp_newpass2" type="password" placeholder="Repeat password"></div>
+      <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('forgotModal')">Cancel</button>
+        <button class="btn btn-success" id="fp_resetBtn" onclick="fpResetPassword()"><i class="fa-solid fa-check-circle"></i> Reset Password</button></div>
+    </div>
+    <div id="fp-step4" style="display:none;text-align:center;padding:10px 0;">
+      <div style="font-size:3rem;margin-bottom:12px;">✅</div>
+      <h3 style="color:var(--success);">Password Reset!</h3>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:20px;">You can now login with your new password.</p>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="closeModal('forgotModal');showPage('loginPage');">
+        <i class="fa-solid fa-right-to-bracket"></i> Go to Login</button>
+    </div>
   </div>
 </div>
 
@@ -943,7 +995,9 @@ button, input, select, textarea { font-family: inherit; }
         <a href="#" onclick="adminNav('sessions')" id="anav-sessions"><i class="fa-solid fa-calendar-check"></i> All Sessions</a>
         <div class="nav-section">Reports</div>
         <a href="#" onclick="adminNav('reports')" id="anav-reports"><i class="fa-solid fa-chart-bar"></i> Attendance Reports</a>
+        <a href="#" onclick="adminNav('defaulters')" id="anav-defaulters"><i class="fa-solid fa-triangle-exclamation"></i> Defaulter List</a>
         <div class="nav-section">System</div>
+        <a href="#" onclick="adminNav('audit')" id="anav-audit"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
         <a href="#" onclick="adminNav('settings')" id="anav-settings"><i class="fa-solid fa-gear"></i> Settings</a>
         <a href="#" onclick="adminNav('profile')" id="anav-profile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
       </nav>
@@ -997,6 +1051,7 @@ button, input, select, textarea { font-family: inherit; }
     <button class="ham-btn" onclick="toggleSidebar('stuSb')" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
     <div class="brand"><i class="fa-solid fa-graduation-cap"></i> Smart Attendance <span>STUDENT</span></div>
     <div class="navbar-right">
+      <button id="pwaInstallBtn" class="nav-btn" onclick="pwaInstall()" style="display:none;"><i class="fa-solid fa-download"></i> Install App</button>
       <button class="nav-btn" onclick="stuNav('scan')"><i class="fa-solid fa-qrcode"></i> Scan QR</button>
       <div class="user-chip">
         <div class="av" id="stuAv">S</div>
@@ -1022,6 +1077,7 @@ button, input, select, textarea { font-family: inherit; }
         <a href="#" onclick="stuNav('timetable')" id="snav-timetable"><i class="fa-solid fa-calendar-days"></i> My Timetable</a>
         <a href="#" onclick="stuNav('scan')" id="snav-scan"><i class="fa-solid fa-qrcode"></i> Mark Attendance</a>
         <a href="#" onclick="stuNav('history')" id="snav-history"><i class="fa-solid fa-history"></i> Attendance History</a>
+        <a href="#" onclick="stuNav('calendar')" id="snav-calendar"><i class="fa-solid fa-calendar-days"></i> Calendar View</a>
         <div class="nav-section">Account</div>
         <a href="#" onclick="stuNav('profile')" id="snav-profile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
       </nav>
@@ -1281,13 +1337,34 @@ button, input, select, textarea { font-family: inherit; }
       <label class="form-label">Class Title *</label>
       <input class="form-control" id="ec_title" placeholder="e.g. Extra Lecture — Unit 4 Revision">
     </div>
+    <div class="form-group">
+      <label class="form-label">Course / Program <small style="color:var(--muted);font-weight:400;">(for student filter)</small></label>
+      <select class="form-control form-select" id="ec_course_prog" onchange="updateEcBranches()">
+        <option value="">— Select Course (optional) —</option>
+        <option value="B.Tech">B.Tech</option>
+        <option value="B.E">B.E</option>
+        <option value="BCA">BCA</option>
+        <option value="MCA">MCA</option>
+        <option value="MBA">MBA</option>
+        <option value="B.Pharma">B.Pharma</option>
+        <option value="M.Tech">M.Tech</option>
+        <option value="B.Sc">B.Sc</option>
+        <option value="M.Sc">M.Sc</option>
+        <option value="BBA">BBA</option>
+        <option value="B.Com">B.Com</option>
+        <option value="LLB">LLB</option>
+        <option value="MBBS">MBBS</option>
+      </select>
+    </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Branch</label>
-        <input class="form-control" id="ec_branch" placeholder="e.g. B.Tech - CSE">
+        <label class="form-label">Branch / Specialization</label>
+        <select class="form-control form-select" id="ec_branch">
+          <option value="">— Select branch (optional) —</option>
+        </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Section</label>
+        <label class="form-label">Section <small style="color:var(--muted);font-weight:400;">(optional)</small></label>
         <input class="form-control" id="ec_section" placeholder="e.g. A" maxlength="10">
       </div>
     </div>
@@ -1634,6 +1711,8 @@ async function adminNav(section) {
     timetable: renderTimetable,
     sessions:  renderAllSessions,
     reports:   renderReports,
+    defaulters: c => renderDefaulters(c),
+    audit:      c => renderAuditLog(c),
     settings:  renderSettingsPage,
     profile:   (c) => renderProfile(c, currentUser),
   };
@@ -1716,6 +1795,16 @@ async function renderUserMgmt(c) {
     <div class="card">
       <div class="search-bar">
         <input class="form-control" id="userSearch" placeholder="Search by name, ID, email..." style="max-width:280px;" oninput="filterUsersTable()">
+        <select class="form-control form-select" id="userRoleFilter" style="max-width:130px;" onchange="filterUsersTable()">
+          <option value="">All Roles</option><option value="student">Students</option>
+          <option value="faculty">Faculty</option><option value="admin">Admin</option>
+        </select>
+        <select class="form-control form-select" id="userStatusFilter" style="max-width:140px;" onchange="filterUsersTable()">
+          <option value="">All Status</option><option value="active">Active</option>
+          <option value="pending">Pending</option><option value="inactive">Inactive</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="exportTableCSV('usersTable','users.csv')" title="Export CSV"><i class="fa-solid fa-download"></i></button>
+        <button class="btn btn-outline btn-sm" onclick="printContent('User List')" title="Print"><i class="fa-solid fa-print"></i></button>
         <select class="form-control form-select" id="roleFilter" onchange="filterUsersTable()" style="max-width:140px;">
           <option value="">All Roles</option><option value="student">Students</option><option value="faculty">Faculty</option><option value="admin">Admins</option>
         </select>
@@ -1741,10 +1830,14 @@ async function loadUsersTable() {
 
 function filterUsersTable() {
   const search = (document.getElementById('userSearch')?.value||'').toLowerCase();
+  const roleF  = (document.getElementById('userRoleFilter')?.value||'');
+  const statF  = (document.getElementById('userStatusFilter')?.value||'');
   const role   = document.getElementById('roleFilter')?.value||'';
   const status = document.getElementById('statusFilter')?.value||'';
   let list = allUsersCache;
   if (search) list = list.filter(u => `${u.full_name} ${u.inst_id} ${u.email}`.toLowerCase().includes(search));
+  if (roleF)  list = list.filter(u => u.role   === roleF);
+  if (statF)  list = list.filter(u => u.status === statF);
   if (role)   list = list.filter(u => u.role   === role);
   if (status) list = list.filter(u => u.status === status);
   const wrap = document.getElementById('usersTableBody');
@@ -1845,6 +1938,7 @@ async function approveUser(id) {
   try {
     await API.patch(`/users/${id}/status`, { status: 'active' });
     toast('User approved!','success');
+    auditLog('approve_user', `User ID ${id}`, 'Status set to active');
     await loadUsersTable();
     updatePendingBadge();
   } catch(e) { toast(e.message,'error'); }
@@ -1874,6 +1968,46 @@ function toggleAdminUserFields() {
   document.getElementById('mu_student_fields').style.display = role === 'student' ? 'block' : 'none';
   document.getElementById('mu_staff_fields').style.display   = role !== 'student' ? 'block' : 'none';
 }
+
+/* ══════════════════════════════════════════════
+   BRANCH DROPDOWN HELPERS — Extra Class & Slot
+══════════════════════════════════════════════ */
+function buildBranchOptions(course, selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const known = (typeof BRANCH_MAP !== 'undefined' ? BRANCH_MAP : {})[course] || [];
+  sel.innerHTML = '<option value="">— Select branch —</option>' +
+    known.map(b => {
+      const combined = course + ' - ' + b;
+      return '<option value="' + combined + '">' + b + '</option>';
+    }).join('') +
+    '<option value="">All branches (no filter)</option>';
+}
+
+function updateEcBranches() {
+  const course = document.getElementById('ec_course_prog')?.value || '';
+  const brSel  = document.getElementById('ec_branch');
+  if (!brSel) return;
+  if (!course) { brSel.innerHTML = '<option value="">— Select course first —</option>'; return; }
+  buildBranchOptions(course, 'ec_branch');
+}
+
+function updateSlBranches() {
+  const course = document.getElementById('sl_course_prog')?.value || '';
+  const brSel  = document.getElementById('sl_branch');
+  if (!brSel) return;
+  if (!course) { brSel.innerHTML = '<option value="">— Select course first —</option>'; return; }
+  buildBranchOptions(course, 'sl_branch');
+}
+
+function getEcBranch() {
+  return (document.getElementById('ec_branch')?.value || '').trim();
+}
+
+function getSlBranch() {
+  return (document.getElementById('sl_branch')?.value || '').trim();
+}
+
 
 function updateAdminBranches() {
   const course = document.getElementById('mu_course').value;
@@ -2009,7 +2143,10 @@ async function deleteAndRefresh(id, name) {
 async function approveAll() {
   const data = await API.get('/users?status=pending&limit=500').catch(()=>({users:[]}));
   const pending = data.users||[];
+  if (!pending.length) { toast('No pending users','info'); return; }
+  if (!confirm(`Approve all ${pending.length} pending student(s)?`)) return;
   await Promise.all(pending.map(u => API.patch(`/users/${u.id}/status`,{status:'active'}).catch(()=>{})));
+  auditLog('bulk_approve',`${pending.length} students`,'All pending users approved at once');
   toast(`${pending.length} users approved!`,'success');
   updatePendingBadge();
   await renderPending(document.getElementById('adminContent'));
@@ -2227,17 +2364,27 @@ async function renderTimetable(c) {
           <div style="font-size:.72rem;font-weight:700;color:var(--primary);margin-bottom:8px;text-transform:uppercase;"><i class="fa-solid fa-users"></i> For Which Students?</div>
           <div class="form-row">
             <div class="form-group" style="margin-bottom:8px;">
-              <label class="form-label">Branch</label>
+              <label class="form-label">Course / Program</label>
+              <select class="form-control form-select" id="sl_course_prog" onchange="updateSlBranches()">
+                <option value="">— Select Course —</option>
+                <option value="B.Tech">B.Tech</option>
+                <option value="B.E">B.E</option>
+                <option value="BCA">BCA</option>
+                <option value="MCA">MCA</option>
+                <option value="MBA">MBA</option>
+                <option value="B.Pharma">B.Pharma</option>
+                <option value="M.Tech">M.Tech</option>
+                <option value="B.Sc">B.Sc</option>
+                <option value="M.Sc">M.Sc</option>
+                <option value="BBA">BBA</option>
+                <option value="LLB">LLB</option>
+                <option value="MBBS">MBBS</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:8px;">
+              <label class="form-label">Branch / Specialization</label>
               <select class="form-control form-select" id="sl_branch">
-                <option value="">— Select —</option>
-                ${[...new Set(courseList.map(co=>co.branch||co.department||'').filter(Boolean))].map(b=>`<option>${b}</option>`).join('')}
-                <option>B.Tech - CSE (Computer Science &amp; Engineering)</option>
-                <option>B.Tech - ECE (Electronics &amp; Communication)</option>
-                <option>B.Tech - ME (Mechanical Engineering)</option>
-                <option>B.Tech - Civil Engineering</option>
-                <option>BCA - BCA (General)</option>
-                <option>MBA - Finance</option>
-                <option>MBA - Marketing</option>
+                <option value="">— Select branch —</option>
               </select>
             </div>
             <div class="form-group" style="margin-bottom:8px;">
@@ -2376,7 +2523,7 @@ async function renderReports(c) {
   const students = users.users||[];
   const closed   = (sessions.sessions||[]).filter(s=>s.status==='closed');
   c.innerHTML = `
-    <div class="page-header"><h2><i class="fa-solid fa-chart-bar" style="color:var(--accent);"></i> Attendance Reports</h2></div>
+    <div class="page-header"><h2><i class="fa-solid fa-chart-bar" style="color:var(--accent);"></i> Attendance Reports</h2><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="printContent('Attendance Reports')"><i class="fa-solid fa-print"></i> Print</button><button class="btn btn-outline btn-sm" onclick="exportTableCSV(null,'report.csv')"><i class="fa-solid fa-download"></i> Export CSV</button></div></div>
     <div class="card">
       <div class="section-title">Student-wise Attendance (${closed.length} closed sessions)</div>
       ${!students.length ? '<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>No students</p></div>' :
@@ -2870,6 +3017,10 @@ async function openExtraClassModal() {
 
   // Pre-fill branch/section from faculty's own timetable context if available
   document.getElementById('ec_title').value    = '';
+  const cpEl = document.getElementById('ec_course_prog');
+  if (cpEl) { cpEl.value = ''; }
+  const brEl = document.getElementById('ec_branch');
+  if (brEl) brEl.innerHTML = '<option value="">— Select course first —</option>';
   document.getElementById('ec_location').value = '';
   document.getElementById('ec_grace').value    = '15';
 
@@ -2906,7 +3057,7 @@ async function openExtraClassModal() {
 async function saveExtraClass() {
   const courseId = parseInt(document.getElementById('ec_course').value);
   const title    = document.getElementById('ec_title').value.trim();
-  const branch   = document.getElementById('ec_branch').value.trim();
+  const branch   = getEcBranch();  // exact 'Course - Branch' format from dropdown
   const section  = document.getElementById('ec_section').value.trim();
   const location = document.getElementById('ec_location').value.trim();
   const grace    = parseInt(document.getElementById('ec_grace').value) || 15;
@@ -3073,7 +3224,7 @@ async function renderFacAttendance(c) {
   cachedCourses = Array.isArray(courses)?courses:[];
   const ss = sessions.sessions||[];
   c.innerHTML = `
-    <div class="page-header"><h2><i class="fa-solid fa-clipboard-list" style="color:var(--accent);"></i> Attendance Sheet</h2></div>
+    <div class="page-header"><h2><i class="fa-solid fa-clipboard-list" style="color:var(--accent);"></i> Attendance Sheet</h2><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="printContent('Attendance Sheet')"><i class="fa-solid fa-print"></i> Print</button><button class="btn btn-outline btn-sm" onclick="exportTableCSV(null,'attendance_sheet.csv')"><i class="fa-solid fa-download"></i> Export CSV</button></div></div>
     <div class="card" style="margin-bottom:16px;">
       <label class="form-label">Select Session</label>
       <select class="form-control form-select" id="attSessionSel" onchange="loadAttSheet()" style="max-width:450px;">
@@ -3234,6 +3385,7 @@ async function stuNav(section) {
     timetable: renderStuTimetable,
     scan:      renderStuScan,
     history:   renderStuHistory,
+    calendar:  c => renderStuCalendar(c),
     profile:   (c) => renderProfile(c, currentUser),
   };
   if (renders[section]) await renders[section](c);
@@ -4101,7 +4253,7 @@ async function renderStuHistory(c) {
   const present= att.filter(a=>a.status==='present').length;
   const p      = pct(present, closed.length);
   c.innerHTML  = `
-    <div class="page-header"><h2><i class="fa-solid fa-history" style="color:var(--accent);"></i> Attendance History</h2></div>
+    <div class="page-header"><h2><i class="fa-solid fa-history" style="color:var(--accent);"></i> Attendance History</h2><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="stuNav('calendar')"><i class="fa-solid fa-calendar-days"></i> Calendar</button><button class="btn btn-outline btn-sm" onclick="exportAttendanceCSV(att,ss,cs,'my_attendance.csv')"><i class="fa-solid fa-download"></i> Export CSV</button><button class="btn btn-outline btn-sm" onclick="printContent('Attendance History')"><i class="fa-solid fa-print"></i> Print</button></div></div>
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-icon" style="background:#d1fae5;"><i class="fa-solid fa-user-check" style="color:#065f46;"></i></div><div><div class="stat-val">${present}</div><div class="stat-lbl">Present</div></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:#fee2e2;"><i class="fa-solid fa-user-xmark" style="color:#991b1b;"></i></div><div><div class="stat-val">${closed.length-present}</div><div class="stat-lbl">Absent</div></div></div>
@@ -4351,8 +4503,251 @@ function proceedToPortal() {
   initStudent();
 }
 
-// Pre-load face-api models in background after page load
+
+/* ═══════════════ FORGOT PASSWORD OTP ═══════════════ */
+let _fp_email='',_fp_resetToken='',_fp_timerID=null;
+function openForgotPassword(){
+  _fp_email='';_fp_resetToken='';
+  ['fp_email','fp_otp','fp_newpass','fp_newpass2'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  fpShowStep(1);openModal('forgotModal');
+}
+function fpShowStep(n){[1,2,3,4].forEach(i=>{const e=document.getElementById('fp-step'+i);if(e)e.style.display=i===n?'block':'none';});}
+async function fpSendOtp(){
+  const email=document.getElementById('fp_email').value.trim();
+  if(!email){toast('Enter your email or enrollment number','warning');return;}
+  const btn=document.getElementById('fp_sendBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Sending...';
+  try{
+    const res=await API.post('/auth/forgot-password/send-otp',{email});
+    _fp_email=res.email||email;
+    if(res.dev_otp){toast(`Dev OTP: ${res.dev_otp}`,'warning');console.log('[DEV OTP]',res.dev_otp);}
+    document.getElementById('fp_emailDisplay').textContent=_fp_email;
+    fpShowStep(2);fpStartTimer(600);
+    setTimeout(()=>document.getElementById('fp_otp').focus(),100);
+  }catch(e){toast(e.message||'Failed to send OTP','error');}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane"></i> Send OTP';}
+}
+function fpStartTimer(sec){
+  if(_fp_timerID)clearInterval(_fp_timerID);
+  let r=sec;const el=document.getElementById('fp_timer');
+  const tick=()=>{const m=Math.floor(r/60).toString().padStart(2,'0'),s=(r%60).toString().padStart(2,'0');if(el)el.textContent=`${m}:${s}`;if(r<=0){clearInterval(_fp_timerID);if(el)el.textContent='Expired';}r--;};
+  tick();_fp_timerID=setInterval(tick,1000);
+}
+async function fpVerifyOtp(){
+  const otp=document.getElementById('fp_otp').value.trim();
+  if(otp.length!==6){toast('Enter the 6-digit OTP','warning');return;}
+  const btn=document.getElementById('fp_verifyBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Verifying...';
+  try{
+    const res=await API.post('/auth/forgot-password/verify-otp',{email:_fp_email,otp});
+    _fp_resetToken=res.reset_token;clearInterval(_fp_timerID);fpShowStep(3);
+    setTimeout(()=>document.getElementById('fp_newpass').focus(),100);toast('OTP verified!','success');
+  }catch(e){toast(e.message||'Invalid OTP','error');document.getElementById('fp_otp').value='';document.getElementById('fp_otp').focus();}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-check"></i> Verify OTP';}
+}
+async function fpResend(){document.getElementById('fp_otp').value='';await fpSendOtp();}
+async function fpResetPassword(){
+  const p1=document.getElementById('fp_newpass').value,p2=document.getElementById('fp_newpass2').value;
+  if(p1.length<6){toast('Password must be at least 6 characters','warning');return;}
+  if(p1!==p2){toast('Passwords do not match','warning');return;}
+  const btn=document.getElementById('fp_resetBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Resetting...';
+  try{
+    await API.post('/auth/forgot-password/reset',{email:_fp_email,reset_token:_fp_resetToken,new_password:p1});
+    fpShowStep(4);toast('Password reset!','success');
+  }catch(e){toast(e.message||'Reset failed','error');}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-check-circle"></i> Reset Password';}
+}
+
+/* ═══════════════ CSV EXPORT ═══════════════ */
+function exportTableCSV(tableId, filename) {
+  const table = tableId ? document.getElementById(tableId) : document.querySelector('.tbl-wrap table');
+  if (!table) { toast('No table found to export','warning'); return; }
+  const rows = [...table.querySelectorAll('tr')];
+  const csv = rows.map(r=>[...r.querySelectorAll('th,td')].map(cell=>`"${cell.innerText.replace(/"/g,'""').trim()}"`).join(',')).join('
+');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = filename||'export.csv'; a.click();
+  toast('CSV downloaded!','success');
+}
+
+function exportAttendanceCSV(records, sessions, courses, filename) {
+  const ss=Array.isArray(sessions)?sessions:(sessions?.sessions||[]);
+  const cs=Array.isArray(courses)?courses:[];
+  const rows=[['Date','Course','Session','Status','Method'],...records.map(a=>{
+    const s=ss.find(x=>x.id===a.session_id),co=cs.find(x=>x.id===s?.course_id);
+    return [fmtDT(a.marked_at),co?.name||'Unknown',s?.title||'?',a.status,a.method];
+  })].map(r=>r.map(c=>`"${c}"`).join(',')).join('
+');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([rows],{type:'text/csv'}));
+  a.download=filename||'attendance.csv'; a.click();
+  toast('CSV exported!','success');
+}
+
+/* ═══════════════ PRINT ═══════════════ */
+function printContent(title) {
+  const main=document.querySelector('.main-content');
+  if(!main){window.print();return;}
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>${title||'Report'}</title>
+    <style>body{font-family:Arial,sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}
+    th,td{border:1px solid #ddd;padding:8px;font-size:12px;}th{background:#1a3c6e;color:#fff;}
+    .badge{padding:2px 8px;border-radius:10px;font-size:11px;}
+    .bg-green{background:#d1fae5;}.bg-red{background:#fee2e2;}.bg-orange{background:#fef3c7;}
+    button,.btn,.ham-btn{display:none!important;}</style></head>
+    <body><h2 style="color:#1a3c6e;">Smart Attendance — TMU</h2>
+    <p style="color:#666;font-size:12px;">Printed: ${new Date().toLocaleString('en-IN')}</p>
+    ${main.innerHTML}</body></html>`);
+  w.document.close(); setTimeout(()=>w.print(),600);
+}
+
+/* ═══════════════ STUDENT CALENDAR VIEW ═══════════════ */
+let _calYear=new Date().getFullYear(),_calMonth=new Date().getMonth(),_calAttData=null,_calSessions=null;
+
+async function renderStuCalendar(c) {
+  loading(true,'Loading calendar...');
+  const branch=currentUser.branch||currentUser.department||'',section=currentUser.section||'';
+  const [attData,sessData]=await Promise.all([
+    API.get(`/attendance/student/${currentUser.id}?limit=500`).catch(()=>({records:[]})),
+    API.get(`/sessions?limit=500&branch=${encodeURIComponent(branch)}&section=${encodeURIComponent(section)}`).catch(()=>({sessions:[]})),
+  ]);
+  _calAttData=attData.records||[];_calSessions=sessData.sessions||[];
+  loading(false);
+  _calYear=new Date().getFullYear();_calMonth=new Date().getMonth();
+  c.innerHTML=`
+    <div class="page-header">
+      <h2><i class="fa-solid fa-calendar-days" style="color:var(--accent);"></i> Attendance Calendar</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="exportAttendanceCSV(_calAttData,_calSessions||[],[],'my_attendance.csv')"><i class="fa-solid fa-download"></i> Export CSV</button>
+        <button class="btn btn-outline btn-sm" onclick="printContent('Attendance Calendar')"><i class="fa-solid fa-print"></i> Print</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <button class="btn btn-outline btn-sm" onclick="calPrev()"><i class="fa-solid fa-chevron-left"></i></button>
+        <div id="calMonthTitle" style="font-size:1rem;font-weight:700;"></div>
+        <button class="btn btn-outline btn-sm" onclick="calNext()"><i class="fa-solid fa-chevron-right"></i></button>
+      </div>
+      <div id="calGrid"></div>
+      <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;font-size:.8rem;">
+        <span><span style="display:inline-block;width:12px;height:12px;background:#d1fae5;border-radius:3px;margin-right:4px;"></span>Present</span>
+        <span><span style="display:inline-block;width:12px;height:12px;background:#fee2e2;border-radius:3px;margin-right:4px;"></span>Absent</span>
+        <span><span style="display:inline-block;width:12px;height:12px;background:#fef3c7;border-radius:3px;margin-right:4px;"></span>Late</span>
+        <span><span style="display:inline-block;width:12px;height:12px;background:var(--border);border-radius:3px;margin-right:4px;"></span>No class</span>
+      </div>
+    </div>`;
+  renderCalGrid();
+}
+
+function renderCalGrid(){
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonthTitle').textContent=`${months[_calMonth]} ${_calYear}`;
+  const first=new Date(_calYear,_calMonth,1).getDay(),days=new Date(_calYear,_calMonth+1,0).getDate();
+  const dateMap={};
+  (_calAttData||[]).forEach(a=>{const d=new Date(a.marked_at).toDateString();if(!dateMap[d]||a.status==='present')dateMap[d]=a.status;});
+  (_calSessions||[]).filter(s=>s.status==='closed').forEach(s=>{const d=new Date(s.started_at||s.scheduled_at).toDateString();if(!dateMap[d])dateMap[d]='session_no_att';});
+  let h=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">`;
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>h+=`<div style="text-align:center;font-size:.72rem;font-weight:700;color:var(--muted);padding:4px 0;">${d}</div>`);
+  for(let i=0;i<first;i++)h+=`<div></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=new Date(_calYear,_calMonth,d).toDateString(),status=dateMap[ds],isToday=new Date().toDateString()===ds;
+    let bg='transparent',color='var(--text)',border=isToday?'2px solid var(--primary)':'1px solid var(--border)';
+    if(status==='present'){bg='#d1fae5';color='#065f46';}
+    else if(status==='absent'||status==='session_no_att'){bg='#fee2e2';color='#991b1b';}
+    else if(status==='late'){bg='#fef3c7';color='#92400e';}
+    h+=`<div style="text-align:center;padding:8px 4px;border-radius:6px;background:${bg};color:${color};border:${border};font-size:.82rem;font-weight:${isToday?'700':'400'};">${d}</div>`;
+  }
+  h+=`</div>`;
+  document.getElementById('calGrid').innerHTML=h;
+}
+function calPrev(){_calMonth--;if(_calMonth<0){_calMonth=11;_calYear--;}renderCalGrid();}
+function calNext(){_calMonth++;if(_calMonth>11){_calMonth=0;_calYear++;}renderCalGrid();}
+
+/* ═══════════════ DEFAULTER LIST ═══════════════ */
+async function renderDefaulters(c){
+  loading(true,'Calculating attendance...');
+  const [usersData,sessData,attData]=await Promise.all([
+    API.get('/users?role=student&limit=500').catch(()=>({users:[]})),
+    API.get('/sessions?limit=500').catch(()=>({sessions:[]})),
+    API.get('/attendance?limit=2000').catch(()=>({records:[]})),
+  ]);
+  const students=usersData.users||[],sessions=(sessData.sessions||[]).filter(s=>s.status==='closed'),records=attData.records||[];
+  loading(false);
+  const defaulters=students.map(stu=>{
+    const sr=records.filter(r=>r.student_id===stu.id),present=sr.filter(r=>r.status==='present'||r.status==='late').length;
+    const pct_val=sessions.length?Math.round((present/sessions.length)*100):100;
+    return{...stu,present,total:sessions.length,pct_val};
+  }).filter(s=>s.pct_val<75).sort((a,b)=>a.pct_val-b.pct_val);
+  c.innerHTML=`
+    <div class="page-header">
+      <h2><i class="fa-solid fa-triangle-exclamation" style="color:var(--accent2);"></i> Defaulter List <span class="badge bg-red">${defaulters.length}</span></h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="printContent('Defaulter List')"><i class="fa-solid fa-print"></i> Print</button>
+        <button class="btn btn-outline btn-sm" onclick="exportTableCSV('defaultersTable','defaulters.csv')"><i class="fa-solid fa-download"></i> CSV</button>
+      </div>
+    </div>
+    <div class="alert alert-warning"><i class="fa-solid fa-info-circle"></i> Students with attendance below 75% — ${defaulters.length} student(s) at risk</div>
+    <div class="card">
+      ${!defaulters.length?'<div class="empty-state"><i class="fa-solid fa-check-circle" style="color:var(--success);"></i><p>No defaulters — all students above 75%!</p></div>':
+        `<div class="tbl-wrap"><table class="tbl" id="defaultersTable">
+          <thead><tr><th>Name</th><th>ID</th><th>Department</th><th>Present</th><th>Total</th><th>Attendance %</th></tr></thead>
+          <tbody>${defaulters.map(s=>`<tr>
+            <td><strong>${s.full_name}</strong></td><td><code>${s.inst_id}</code></td>
+            <td>${s.department||'-'}</td><td>${s.present}</td><td>${s.total}</td>
+            <td><span class="badge ${s.pct_val<50?'bg-red':'bg-orange'}">${s.pct_val}%</span>
+              <div class="pct-bar" style="margin-top:4px;"><div class="pct-bar-fill danger" style="width:${s.pct_val}%;"></div></div></td>
+          </tr>`).join('')}</tbody>
+        </table></div>`}
+    </div>`;
+}
+
+/* ═══════════════ AUDIT LOG ═══════════════ */
+function auditLog(action,target,detail){
+  if(!currentUser)return;
+  API.post('/audit/log',{action,target,detail,by:`${currentUser.full_name} (${currentUser.inst_id})`}).catch(()=>{});
+}
+async function renderAuditLog(c){
+  const logs=await API.get('/audit/log').catch(()=>[]);
+  c.innerHTML=`
+    <div class="page-header">
+      <h2><i class="fa-solid fa-clipboard-list" style="color:var(--primary);"></i> Audit Log</h2>
+      <button class="btn btn-outline btn-sm" onclick="printContent('Audit Log')"><i class="fa-solid fa-print"></i> Print</button>
+    </div>
+    <div class="card">
+      ${!logs.length?'<div class="empty-state"><i class="fa-solid fa-clipboard"></i><p>No audit entries yet</p></div>':
+        `<div class="tbl-wrap"><table class="tbl">
+          <thead><tr><th>Time</th><th>Action</th><th>By</th><th>Target</th><th>Detail</th></tr></thead>
+          <tbody>${logs.map(l=>`<tr>
+            <td style="font-size:.78rem;white-space:nowrap;">${l.timestamp}</td>
+            <td><span class="badge ${l.action.includes('delete')||l.action.includes('reject')?'bg-red':l.action.includes('approve')?'bg-green':'bg-blue'}">${l.action}</span></td>
+            <td>${l.by}</td><td>${l.target}</td>
+            <td style="font-size:.82rem;color:var(--muted);">${l.detail}</td>
+          </tr>`).join('')}</tbody>
+        </table></div>`}
+    </div>`;
+}
+
+/* ═══════════════ PWA ═══════════════ */
+function setupPWA(){
+  const manifest={name:"Smart Attendance — TMU",short_name:"Attendance",start_url:"/",display:"standalone",
+    background_color:"#1a3c6e",theme_color:"#1a3c6e",description:"Smart Attendance System — TMU",
+    icons:[{src:"https://ui-avatars.com/api/?name=SA&background=1a3c6e&color=fff&size=192",sizes:"192x192",type:"image/png"},
+           {src:"https://ui-avatars.com/api/?name=SA&background=1a3c6e&color=fff&size=512",sizes:"512x512",type:"image/png"}]};
+  const link=document.getElementById('pwa-manifest');
+  if(link)link.href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/json'}));
+  let deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const b=document.getElementById('pwaInstallBtn');if(b)b.style.display='flex';});
+  window.addEventListener('appinstalled',()=>{toast('App installed!','success');deferredPrompt=null;});
+  window.pwaInstall=async()=>{
+    if(deferredPrompt){deferredPrompt.prompt();const r=await deferredPrompt.userChoice;if(r.outcome==='accepted')toast('Installing...','success');deferredPrompt=null;}
+    else toast('To install: tap browser menu → Add to Home Screen','info');
+  };
+}
+
 window.addEventListener('load', () => {
+  setupPWA();
   setTimeout(() => loadFaceApiModels().catch(()=>{}), 3000);
 });
 
