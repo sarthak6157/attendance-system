@@ -64,10 +64,6 @@ for path in [os.path.join(BASE_DIR, "..", "frontend"), os.path.join(BASE_DIR, "f
     if os.path.isdir(r):
         FRONTEND_DIR = r; break
 
-if FRONTEND_DIR:
-    try: app.mount("/assets", StaticFiles(directory=FRONTEND_DIR), name="static")
-    except: pass
-
 @app.get("/", response_class=HTMLResponse)
 def serve_frontend():
     if FRONTEND_DIR:
@@ -76,3 +72,10 @@ def serve_frontend():
             with open(idx, "r", encoding="utf-8") as f:
                 return HTMLResponse(content=f.read())
     return HTMLResponse("<h2>API running. Visit <a href='/docs'>/docs</a></h2>")
+
+# Mount static files at root LAST so API routes take priority.
+# html=True enables SPA fallback — unmatched paths serve index.html
+# instead of returning 404, which is required for client-side routing.
+if FRONTEND_DIR:
+    try: app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
+    except: pass
