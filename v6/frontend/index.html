@@ -1687,8 +1687,10 @@ async function installPWA() {
 
 /* =========================== API CONFIG =========================== */
 const API = (() => {
-  // Always use same origin - works locally AND on Render automatically
-  const base = `${window.location.protocol}//${window.location.host}/api`;
+  // If opened as file:// fallback to localhost, otherwise use same origin
+  const base = (window.location.protocol === 'file:')
+    ? 'http://localhost:8000/api'
+    : `${window.location.protocol}//${window.location.host}/api`;
 
   const token = () => localStorage.getItem('sas_token');
 
