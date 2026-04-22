@@ -7,6 +7,7 @@
 <link rel="icon" href="data:,">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#1a3c6e">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
@@ -1441,17 +1442,19 @@ function submitForgotPass() {
    CSV EXPORT — works for any table data
 ══════════════════════════════════════════════════════════════ */
 function exportToCSV(rows, headers, filename) {
-  const escape = v => {
-    const s = String(v == null ? '' : v).replace(/"/g, '""');
-    return /[,
-"]/.test(s) ? `"${s}"` : s;
+  const escape = function(v) {
+    var s = String(v == null ? '' : v);
+    s = s.split('"').join('""');        // replace " with ""
+    if (s.indexOf(',') >= 0 || s.indexOf('\n') >= 0 || s.indexOf('"') >= 0) {
+      s = '"' + s + '"';
+    }
+    return s;
   };
-  const lines = [headers.map(escape).join(',')];
-  rows.forEach(r => lines.push(r.map(escape).join(',')));
-  const blob = new Blob([lines.join('
-')], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
+  var csvLines = [headers.map(escape).join(',')];
+  rows.forEach(function(r) { csvLines.push(r.map(escape).join(',')); });
+  var blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
   a.href = url; a.download = filename + '.csv'; a.click();
   URL.revokeObjectURL(url);
   toast('CSV downloaded!', 'success');
@@ -1633,15 +1636,10 @@ async function approveAll() {
   const pending = data.users || [];
   if (!pending.length) { toast('No pending users to approve','info'); return; }
 
-  const confirmed = confirm(
-    `Approve ALL ${pending.length} pending student${pending.length!==1?'s':''}?
-
-` +
-    pending.slice(0,5).map(u => `• ${u.full_name} (${u.inst_id})`).join('
-') +
-    (pending.length > 5 ? `
-• ...and ${pending.length-5} more` : '')
-  );
+  var confirmMsg = 'Approve ALL ' + pending.length + ' pending student' + (pending.length!==1?'s':'') + '?\n\n';
+  confirmMsg += pending.slice(0,5).map(function(u){ return '- ' + u.full_name + ' (' + u.inst_id + ')'; }).join('\n');
+  if (pending.length > 5) confirmMsg += '\n...and ' + (pending.length-5) + ' more';
+  const confirmed = confirm(confirmMsg);
   if (!confirmed) return;
 
   let approved = 0;
