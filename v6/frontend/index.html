@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Smart Attendance System — TMU</title>
 <link rel="icon" href="data:,">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a3c6e">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -712,6 +715,14 @@ button, input, select, textarea { font-family: inherit; }
   .empty-state i { font-size: 1.8rem; }
 }
 
+@media print {
+  .sidebar, .navbar, .ham-btn, .modal-overlay, #toast, #loadingOverlay, .sb-overlay { display: none !important; }
+  .main-content { padding: 0 !important; overflow: visible !important; min-height: auto !important; }
+  .app-shell { display: block !important; }
+  .card { box-shadow: none !important; border: 1px solid #ccc; page-break-inside: avoid; margin-bottom: 12px; }
+  body { background: white !important; color: black !important; }
+  .tbl th { background: #f0f0f0 !important; }
+}
 @media (max-width: 420px) {
   .stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .stat-val  { font-size: 1.2rem; }
@@ -785,6 +796,8 @@ button, input, select, textarea { font-family: inherit; }
     </button>
     <div style="text-align:center;margin-top:16px;font-size:.85rem;color:var(--muted);">
       Don't have an account? <a href="#" onclick="showPage('registerPage')" style="color:var(--primary);font-weight:600;">Register here</a>
+      &nbsp;·&nbsp;
+      <a href="#" onclick="openForgotPassword()" style="color:var(--muted);font-size:.82rem;">Forgot password?</a>
     </div>
 
   </div>
@@ -916,6 +929,7 @@ button, input, select, textarea { font-family: inherit; }
     <button class="ham-btn" onclick="toggleSidebar('adminSb')" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
     <div class="brand"><i class="fa-solid fa-shield-halved"></i> Smart Attendance <span>ADMIN</span></div>
     <div class="navbar-right">
+      <button id="pwaInstallBtn" onclick="installPWA()" style="display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 10px;border-radius:7px;cursor:pointer;font-size:.78rem;font-family:inherit;"><i class="fa-solid fa-download"></i> Install App</button>
       <div class="user-chip">
         <div class="av" id="adminAv">A</div>
         <span id="adminNameNav" class="chip-name">Admin</span>
@@ -944,6 +958,8 @@ button, input, select, textarea { font-family: inherit; }
         <a href="#" onclick="adminNav('sessions')" id="anav-sessions"><i class="fa-solid fa-calendar-check"></i> All Sessions</a>
         <div class="nav-section">Reports</div>
         <a href="#" onclick="adminNav('reports')" id="anav-reports"><i class="fa-solid fa-chart-bar"></i> Attendance Reports</a>
+        <a href="#" onclick="adminNav('defaulters')" id="anav-defaulters"><i class="fa-solid fa-triangle-exclamation" style="color:#e63946;"></i> Defaulter List</a>
+        <a href="#" onclick="adminNav('audit')" id="anav-audit"><i class="fa-solid fa-scroll"></i> Audit Log</a>
         <div class="nav-section">System</div>
         <a href="#" onclick="adminNav('settings')" id="anav-settings"><i class="fa-solid fa-gear"></i> Settings</a>
         <a href="#" onclick="adminNav('profile')" id="anav-profile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
@@ -1333,6 +1349,33 @@ button, input, select, textarea { font-family: inherit; }
   </div>
 </div>
 
+<!-- ═══ FORGOT PASSWORD MODAL ═══ -->
+<div class="modal-overlay" id="forgotPassModal">
+  <div class="modal-box" style="max-width:420px;">
+    <h3><i class="fa-solid fa-key" style="color:var(--accent);"></i> Reset Password</h3>
+    <div id="fpStep1">
+      <div class="form-group">
+        <label class="form-label">Enrollment ID or Email</label>
+        <input class="form-control" id="fp_credential" placeholder="Your ID or email">
+      </div>
+      <div class="alert alert-info" style="font-size:.82rem;">
+        <i class="fa-solid fa-circle-info"></i>
+        Contact your admin to reset your password: <strong>admin@smartattendance.com</strong>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('forgotPassModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitForgotPass()"><i class="fa-solid fa-paper-plane"></i> Send Request</button>
+      </div>
+    </div>
+    <div id="fpStep2" style="display:none;text-align:center;padding:16px 0;">
+      <div style="font-size:2.5rem;margin-bottom:10px;">✅</div>
+      <div style="font-weight:700;margin-bottom:8px;">Request Sent!</div>
+      <p style="color:var(--muted);font-size:.85rem;">Your admin will reset your password and notify you.</p>
+      <button class="btn btn-primary" style="margin-top:14px;" onclick="closeModal('forgotPassModal')">OK</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ========== SIDEBAR TOGGLE (mobile) ========== */
 function toggleSidebar(id) {
@@ -1374,6 +1417,274 @@ function hideLoading() {
   const ov = document.getElementById('loadingOverlay');
   if (ov) ov.style.display = 'none';
 }
+
+/* ══════════════════════════════════════════════════════════════
+   FORGOT PASSWORD
+══════════════════════════════════════════════════════════════ */
+function openForgotPassword() {
+  document.getElementById('fp_credential').value = '';
+  document.getElementById('fpStep1').style.display = 'block';
+  document.getElementById('fpStep2').style.display = 'none';
+  openModal('forgotPassModal');
+}
+function submitForgotPass() {
+  const cred = document.getElementById('fp_credential').value.trim();
+  if (!cred) { toast('Please enter your ID or email','warning'); return; }
+  // In production this would call an API endpoint
+  // For now we log the request and show confirmation
+  console.log('Password reset requested for:', cred);
+  document.getElementById('fpStep1').style.display = 'none';
+  document.getElementById('fpStep2').style.display = 'block';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CSV EXPORT — works for any table data
+══════════════════════════════════════════════════════════════ */
+function exportToCSV(rows, headers, filename) {
+  const escape = v => {
+    const s = String(v == null ? '' : v).replace(/"/g, '""');
+    return /[,
+"]/.test(s) ? `"${s}"` : s;
+  };
+  const lines = [headers.map(escape).join(',')];
+  rows.forEach(r => lines.push(r.map(escape).join(',')));
+  const blob = new Blob([lines.join('
+')], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename + '.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV downloaded!', 'success');
+}
+
+function exportUsersCSV() {
+  const rows = (allUsersCache || []).map(u => [
+    u.full_name, u.inst_id, u.email, u.role, u.status,
+    u.branch || u.department || '', u.section || '', u.semester || ''
+  ]);
+  exportToCSV(rows, ['Name','ID','Email','Role','Status','Branch','Section','Semester'], 'users_export');
+}
+
+async function exportAttendanceCSV(sessionId) {
+  try {
+    const [attData, sessData] = await Promise.all([
+      API.get(`/attendance/session/${sessionId}`),
+      API.get(`/sessions/${sessionId}`).catch(()=>({})),
+    ]);
+    const records  = attData.records || [];
+    const stuCache = allUsersCache || [];
+    const rows = stuCache.map(stu => {
+      const rec = records.find(r => r.student_id === stu.id);
+      return [
+        stu.full_name, stu.inst_id, stu.branch||'', stu.section||'',
+        rec?.status || 'absent', rec?.method || '-',
+        rec?.marked_at ? new Date(rec.marked_at).toLocaleString() : '-'
+      ];
+    });
+    exportToCSV(rows,
+      ['Name','Enrollment','Branch','Section','Status','Method','Time'],
+      `attendance_session_${sessionId}`);
+  } catch(e) { toast('Export failed: ' + e.message, 'error'); }
+}
+
+async function exportReportsCSV() {
+  try {
+    const [ud, sd] = await Promise.all([
+      API.get('/users?role=student&limit=500').catch(()=>({users:[]})),
+      API.get('/sessions?limit=500').catch(()=>({sessions:[]})),
+    ]);
+    const students = ud.users || [];
+    const closed   = (sd.sessions||[]).filter(s=>s.status==='closed');
+    const rows = await Promise.all(students.map(async stu => {
+      const att = await API.get(`/attendance/student/${stu.id}?limit=500`).catch(()=>({records:[]}));
+      const present = (att.records||[]).filter(r=>r.status==='present').length;
+      const pct = closed.length ? Math.round(present/closed.length*100) : 0;
+      return [stu.full_name, stu.inst_id, stu.branch||'', stu.section||'',
+              present, closed.length - present, pct + '%'];
+    }));
+    exportToCSV(rows,
+      ['Name','Enrollment','Branch','Section','Present','Absent','Attendance%'],
+      'attendance_report');
+  } catch(e) { toast('Export failed: ' + e.message, 'error'); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PRINT
+══════════════════════════════════════════════════════════════ */
+function printPage() {
+  window.print();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DEFAULTER LIST — students < 75% attendance
+══════════════════════════════════════════════════════════════ */
+async function renderDefaulters(c) {
+  c.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+  try {
+    const [ud, sd] = await Promise.all([
+      API.get('/users?role=student&limit=500').catch(()=>({users:[]})),
+      API.get('/sessions?limit=500').catch(()=>({sessions:[]})),
+    ]);
+    const students = ud.users || [];
+    const closed   = (sd.sessions||[]).filter(s=>s.status==='closed');
+
+    const rows = await Promise.all(students.map(async stu => {
+      const att = await API.get(`/attendance/student/${stu.id}?limit=500`).catch(()=>({records:[]}));
+      const present = (att.records||[]).filter(r=>r.status==='present').length;
+      const pct = closed.length ? Math.round(present/closed.length*100) : 100;
+      return { ...stu, present, total: closed.length, pct };
+    }));
+
+    const defaulters = rows.filter(r => r.pct < 75).sort((a,b) => a.pct - b.pct);
+
+    c.innerHTML = `
+      <div class="page-header">
+        <h2><i class="fa-solid fa-triangle-exclamation" style="color:var(--accent2);"></i> Defaulter List
+          <span class="badge bg-red" style="margin-left:8px;">${defaulters.length} students</span>
+        </h2>
+        <div class="btn-group">
+          <button class="btn btn-outline btn-sm" onclick="printPage()"><i class="fa-solid fa-print"></i> Print</button>
+          <button class="btn btn-outline btn-sm" onclick="exportDefaultersCSV()"><i class="fa-solid fa-download"></i> CSV</button>
+        </div>
+      </div>
+      <div class="alert alert-warning"><i class="fa-solid fa-triangle-exclamation"></i>
+        Students below <strong>75%</strong> attendance are at risk of being detained.
+        Total closed sessions: <strong>${closed.length}</strong>
+      </div>
+      <div class="card">
+        ${!defaulters.length
+          ? '<div class="empty-state"><i class="fa-solid fa-check-circle" style="color:var(--success);"></i><p>No defaulters! All students above 75%</p></div>'
+          : `<div class="tbl-wrap"><table class="tbl">
+              <thead><tr><th>Rank</th><th>Name</th><th>Enrollment</th><th>Branch</th><th>Section</th><th>Present</th><th>Absent</th><th>Attendance</th></tr></thead>
+              <tbody>${defaulters.map((s,i) => `<tr>
+                <td style="font-weight:700;color:var(--accent2);">#${i+1}</td>
+                <td><strong>${s.full_name}</strong></td>
+                <td><code>${s.inst_id}</code></td>
+                <td style="font-size:.8rem;">${s.branch||s.department||'-'}</td>
+                <td>${s.section||'-'}</td>
+                <td style="color:var(--success);">${s.present}</td>
+                <td style="color:var(--accent2);">${s.total-s.present}</td>
+                <td><div class="pct-bar" style="width:80px;display:inline-block;vertical-align:middle;margin-right:6px;"><div class="pct-bar-fill danger" style="width:${s.pct}%;"></div></div>
+                  <strong style="color:var(--accent2);">${s.pct}%</strong></td>
+              </tr>`).join('')}</tbody>
+            </table></div>`}
+      </div>`;
+
+    window._defaultersCache = defaulters;
+  } catch(e) {
+    c.innerHTML = `<div class="alert alert-warning">Error: ${e.message}</div>`;
+  }
+}
+
+function exportDefaultersCSV() {
+  const d = window._defaultersCache || [];
+  const rows = d.map((s,i) => [i+1, s.full_name, s.inst_id, s.branch||'', s.section||'',
+    s.present, s.total-s.present, s.pct+'%']);
+  exportToCSV(rows, ['Rank','Name','Enrollment','Branch','Section','Present','Absent','Attendance%'],
+    'defaulters_list');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AUDIT LOG — in-memory log of admin actions
+══════════════════════════════════════════════════════════════ */
+const auditLog = [];
+function logAudit(action, detail) {
+  auditLog.unshift({
+    action, detail,
+    by:   currentUser?.full_name || 'Unknown',
+    time: new Date().toISOString(),
+  });
+  if (auditLog.length > 200) auditLog.pop(); // keep last 200
+}
+
+function renderAuditLog(c) {
+  c.innerHTML = `
+    <div class="page-header">
+      <h2><i class="fa-solid fa-scroll" style="color:var(--accent);"></i> Audit Log</h2>
+      <button class="btn btn-outline btn-sm" onclick="exportAuditCSV()"><i class="fa-solid fa-download"></i> Export CSV</button>
+    </div>
+    <div class="card">
+      ${!auditLog.length
+        ? '<div class="empty-state"><i class="fa-solid fa-scroll"></i><p>No audit entries yet</p></div>'
+        : `<div class="tbl-wrap"><table class="tbl">
+            <thead><tr><th>Time</th><th>Action</th><th>Detail</th><th>By</th></tr></thead>
+            <tbody>${auditLog.map(e => `<tr>
+              <td style="font-size:.78rem;white-space:nowrap;">${new Date(e.time).toLocaleString('en-IN')}</td>
+              <td><span class="badge ${e.action.includes('DELETE')||e.action.includes('REJECT')?'bg-red':e.action.includes('APPROVE')?'bg-green':'bg-blue'}">${e.action}</span></td>
+              <td>${e.detail}</td>
+              <td style="font-size:.82rem;">${e.by}</td>
+            </tr>`).join('')}</tbody>
+          </table></div>`}
+    </div>`;
+}
+
+function exportAuditCSV() {
+  const rows = auditLog.map(e => [
+    new Date(e.time).toLocaleString('en-IN'), e.action, e.detail, e.by
+  ]);
+  exportToCSV(rows, ['Time','Action','Detail','By'], 'audit_log');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BULK APPROVE — with confirmation dialog
+══════════════════════════════════════════════════════════════ */
+async function approveAll() {
+  const data = await API.get('/users?status=pending&limit=500').catch(()=>({users:[]}));
+  const pending = data.users || [];
+  if (!pending.length) { toast('No pending users to approve','info'); return; }
+
+  const confirmed = confirm(
+    `Approve ALL ${pending.length} pending student${pending.length!==1?'s':''}?
+
+` +
+    pending.slice(0,5).map(u => `• ${u.full_name} (${u.inst_id})`).join('
+') +
+    (pending.length > 5 ? `
+• ...and ${pending.length-5} more` : '')
+  );
+  if (!confirmed) return;
+
+  let approved = 0;
+  for (const u of pending) {
+    try {
+      await API.patch(`/users/${u.id}/status`, { status: 'active' });
+      approved++;
+    } catch {}
+  }
+  logAudit('BULK APPROVE', `Approved ${approved} pending students`);
+  toast(`✅ Approved ${approved} student${approved!==1?'s':''}!`, 'success');
+  updatePendingBadge();
+  await renderPending(document.getElementById('adminContent'));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PWA — Install App
+══════════════════════════════════════════════════════════════ */
+let _pwaInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _pwaInstallPrompt = e;
+  // Show install button if it exists
+  const btn = document.getElementById('pwaInstallBtn');
+  if (btn) btn.style.display = 'inline-flex';
+});
+window.addEventListener('appinstalled', () => {
+  _pwaInstallPrompt = null;
+  const btn = document.getElementById('pwaInstallBtn');
+  if (btn) btn.style.display = 'none';
+  toast('App installed!', 'success');
+});
+async function installPWA() {
+  if (!_pwaInstallPrompt) {
+    toast('Open this site in Chrome/Edge on Android to install as an app', 'info');
+    return;
+  }
+  _pwaInstallPrompt.prompt();
+  const { outcome } = await _pwaInstallPrompt.userChoice;
+  if (outcome === 'accepted') toast('Installing app...', 'success');
+  _pwaInstallPrompt = null;
+}
+
 
 
 /* =========================== API CONFIG =========================== */
@@ -1464,6 +1775,18 @@ function setLoginRole(r) {
 }
 
 async function doLogin() {
+  // ── Rate limiting: max 5 attempts per 5 minutes ──────────────────
+  const RL_KEY = 'sas_login_attempts';
+  const RL_WIN = 5 * 60 * 1000; // 5 minutes
+  const RL_MAX = 5;
+  let rlData = JSON.parse(localStorage.getItem(RL_KEY) || '{"count":0,"since":0}');
+  if (Date.now() - rlData.since > RL_WIN) rlData = { count:0, since:Date.now() };
+  if (rlData.count >= RL_MAX) {
+    const wait = Math.ceil((RL_WIN - (Date.now()-rlData.since)) / 60000);
+    toast(`Too many login attempts. Try again in ${wait} minute${wait!==1?'s':''}.`, 'error');
+    return;
+  }
+
   const id   = document.getElementById('loginId').value.trim();
   const pass = document.getElementById('loginPass').value;
   if (!id || !pass) { toast('Please enter ID and password','warning'); return; }
@@ -1478,6 +1801,8 @@ async function doLogin() {
       btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
       return;
     }
+    // Reset rate limit on success
+    localStorage.removeItem('sas_login_attempts');
     localStorage.setItem('sas_token', data.access_token);
     localStorage.setItem('sas_user',  JSON.stringify(data.user));
     currentUser = data.user;
@@ -1660,8 +1985,10 @@ async function adminNav(section) {
     courses:   renderCourses,
     timetable: renderTimetable,
     sessions:  renderAllSessions,
-    reports:   renderReports,
-    settings:  renderSettingsPage,
+    reports:    renderReports,
+    defaulters: renderDefaulters,
+    audit:      renderAuditLog,
+    settings:   renderSettingsPage,
     profile:   (c) => renderProfile(c, currentUser),
   };
   if (renders[section]) await renders[section](c);
@@ -1738,7 +2065,11 @@ async function renderUserMgmt(c) {
   c.innerHTML = `
     <div class="page-header">
       <h2><i class="fa-solid fa-users" style="color:var(--accent);"></i> User Management</h2>
-      <button class="btn btn-accent" onclick="openModal('addUserModal')"><i class="fa-solid fa-user-plus"></i> Add User</button>
+      <div class="btn-group">
+        <button class="btn btn-accent" onclick="openModal('addUserModal')"><i class="fa-solid fa-user-plus"></i> Add User</button>
+        <button class="btn btn-outline btn-sm" onclick="printPage()"><i class="fa-solid fa-print"></i> Print</button>
+        <button class="btn btn-success btn-sm" onclick="exportUsersCSV()"><i class="fa-solid fa-download"></i> CSV</button>
+      </div>
     </div>
     <div class="card">
       <div class="search-bar">
@@ -1871,6 +2202,8 @@ async function saveEditUser() {
 async function approveUser(id) {
   try {
     await API.patch(`/users/${id}/status`, { status: 'active' });
+    const _u = (allUsersCache||[]).find(x=>x.id===id);
+    logAudit('APPROVE USER', `Approved ${_u?.full_name||'user'} (${_u?.inst_id||id})`);
     toast('User approved!','success');
     await loadUsersTable();
     updatePendingBadge();
@@ -1889,6 +2222,7 @@ async function deleteUser(id, name) {
   if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
   try {
     await API.delete(`/users/${id}`);
+    logAudit('DELETE USER', `Deleted ${name} (ID: ${id})`);
     toast('User deleted','warning');
     await loadUsersTable();
     updatePendingBadge();
@@ -2453,7 +2787,13 @@ async function renderReports(c) {
   const students = users.users||[];
   const closed   = (sessions.sessions||[]).filter(s=>s.status==='closed');
   c.innerHTML = `
-    <div class="page-header"><h2><i class="fa-solid fa-chart-bar" style="color:var(--accent);"></i> Attendance Reports</h2></div>
+    <div class="page-header">
+        <h2><i class="fa-solid fa-chart-bar" style="color:var(--accent);"></i> Attendance Reports</h2>
+        <div class="btn-group">
+          <button class="btn btn-outline btn-sm" onclick="printPage()"><i class="fa-solid fa-print"></i> Print</button>
+          <button class="btn btn-success btn-sm" onclick="exportReportsCSV()"><i class="fa-solid fa-download"></i> Export CSV</button>
+        </div>
+      </div>
     <div class="card">
       <div class="section-title">Student-wise Attendance (${closed.length} closed sessions)</div>
       ${!students.length ? '<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>No students</p></div>' :

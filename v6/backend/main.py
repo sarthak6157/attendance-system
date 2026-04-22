@@ -21,9 +21,19 @@ async def startup_event():
     except Exception as e:
         print(f"Seed failed (non-fatal): {e}")
 
+ALLOWED_ORIGINS = [
+    "https://attendance-system-tbon.onrender.com",
+    "http://localhost:8000",
+    "http://localhost:3000",
+    "http://127.0.0.1:8000",
+    "*",  # Remove this in production for stricter security
+]
 app.add_middleware(
-    CORSMiddleware, allow_origins=["*"],
-    allow_credentials=False, allow_methods=["*"], allow_headers=["*"],
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -53,9 +63,42 @@ app.include_router(courses.router,          prefix="/api/courses",    tags=["Cou
 app.include_router(settings_router.router,  prefix="/api/settings",   tags=["Settings"])
 app.include_router(timetable.router,        prefix="/api/timetable",  tags=["Timetable"])
 
+# ── In-memory audit log ──────────────────────────────────────────────────────
+_audit_log = []
+
+@app.post("/api/audit/log")
+async def record_audit(entry: dict, request: Request):
+    from datetime import datetime as dt
+    _audit_log.insert(0, {**entry, "server_time": dt.utcnow().isoformat(), "ip": request.client.host})
+    if len(_audit_log) > 500: _audit_log.pop()
+    return {"ok": True}
+
+@app.get("/api/audit/log")
+async def get_audit():
+    return _audit_log[:200]
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "version": "3.0.0"}
+
+@app.get("/manifest.json")
+def serve_manifest():
+    import json
+    from fastapi.responses import JSONResponse
+    manifest = {
+        "name": "Smart Attendance — TMU",
+        "short_name": "Attendance",
+        "description": "Smart Attendance System for Teerthanker Mahaveer University",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#1a3c6e",
+        "theme_color": "#1a3c6e",
+        "orientation": "portrait-primary",
+        "icons": [{"src": "/favicon.ico", "sizes": "any", "type": "image/x-icon"}],
+        "categories": ["education", "productivity"]
+    }
+    return JSONResponse(content=manifest, headers={"Content-Type": "application/manifest+json"})
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = None

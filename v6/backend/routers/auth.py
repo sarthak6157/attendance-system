@@ -1,6 +1,8 @@
 """Auth routes: login, register, profile, change-password."""
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
+from collections import defaultdict
+from time import time
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from core.security import create_access_token, get_current_user, hash_password, verify_password
 from db.database import get_db
@@ -9,9 +11,27 @@ from schemas.schemas import LoginRequest, PasswordChangeRequest, TokenResponse, 
 
 router = APIRouter()
 
+# ── Simple in-memory rate limiter: IP → list of attempt timestamps ──────────
+_login_attempts: dict = defaultdict(list)
+_MAX_ATTEMPTS   = 5
+_WINDOW_SECONDS = 300  # 5 minutes
+
+def _check_rate_limit(ip: str):
+    now  = time()
+    attempts = [t for t in _login_attempts[ip] if now - t < _WINDOW_SECONDS]
+    _login_attempts[ip] = attempts
+    if len(attempts) >= _MAX_ATTEMPTS:
+        wait = int(_WINDOW_SECONDS - (now - attempts[0]))
+        raise HTTPException(
+            status_code=429,
+            detail=f"Too many login attempts. Try again in {wait//60+1} minute(s)."
+        )
+    _login_attempts[ip].append(now)
+
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, db: Session = Depends(get_db)):
+def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
+    _check_rate_limit(request.client.host)
     credential = payload.credential.strip()
     user = db.query(User).filter(
         (User.email == credential) | (User.inst_id == credential)
@@ -24,6 +44,8 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=403, detail="Account is deactivated. Contact admin.")
     user.last_login = datetime.utcnow()
     db.commit()
+    # Clear rate limit on successful login
+    _login_attempts.pop(request.client.host, None)
     token = create_access_token({"sub": user.id, "role": user.role.value})
     return TokenResponse(access_token=token, user=UserOut.model_validate(user))
 
