@@ -32,12 +32,12 @@ class SessionStatus(str, enum.Enum):
     closed    = "closed"
 
 class DayOfWeek(str, enum.Enum):
-    monday    = "Monday"
-    tuesday   = "Tuesday"
-    wednesday = "Wednesday"
-    thursday  = "Thursday"
-    friday    = "Friday"
-    saturday  = "Saturday"
+    monday    = "monday"
+    tuesday   = "tuesday"
+    wednesday = "wednesday"
+    thursday  = "thursday"
+    friday    = "friday"
+    saturday  = "saturday"
 
 
 class User(Base):
