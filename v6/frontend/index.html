@@ -1689,7 +1689,7 @@ async function installPWA() {
 const API = (() => {
   // If BACKEND_URL is set (Vercel deployment), use it. Otherwise use same origin (Render).
   // ⚙️ SET YOUR RENDER BACKEND URL HERE when hosting frontend on Vercel
-  const BACKEND_URL = window.__BACKEND_URL__ || ''; // e.g. 'https://smart-attendance-api.onrender.com'
+  const BACKEND_URL = window.__BACKEND_URL__ || 'https://attendance-system-tbon.onrender.com'; // e.g. 'https://smart-attendance-api.onrender.com'
   const base = BACKEND_URL ? `${BACKEND_URL}/api` : `${window.location.protocol}//${window.location.host}/api`;
 
   const token = () => localStorage.getItem('sas_token');
