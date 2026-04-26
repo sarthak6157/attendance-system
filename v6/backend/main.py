@@ -21,12 +21,16 @@ async def startup_event():
     except Exception as e:
         print(f"Seed failed (non-fatal): {e}")
 
+# Add your Vercel frontend URL here after deploying
+FRONTEND_URL = os.getenv("FRONTEND_URL", "*")
 ALLOWED_ORIGINS = [
+    FRONTEND_URL,
     "https://attendance-system-tbon.onrender.com",
+    "https://*.vercel.app",
     "http://localhost:8000",
     "http://localhost:3000",
     "http://127.0.0.1:8000",
-    "*",  # Remove this in production for stricter security
+    "*",
 ]
 app.add_middleware(
     CORSMiddleware,

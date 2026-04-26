@@ -1,4 +1,4 @@
-"""Database engine and session factory."""
+"""Database engine — Supabase PostgreSQL compatible."""
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -6,22 +6,22 @@ from sqlalchemy.orm import sessionmaker
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./attendance.db")
 
-# Fix old postgres:// URLs
+# Fix old-style postgres:// URLs
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Connection args
 if "sqlite" in DATABASE_URL:
-    connect_args = {"check_same_thread": False}
-    engine = create_engine(DATABASE_URL, connect_args=connect_args)
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
-    # PostgreSQL (Neon) — use connection pooling compatible settings
+    # Supabase uses pgbouncer — these settings work best
     engine = create_engine(
         DATABASE_URL,
-        pool_pre_ping=True,       # test connection before use
-        pool_recycle=300,         # recycle connections every 5 min
+        pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=5,
+        max_overflow=10,
         connect_args={
-            "sslmode": "require", # Neon requires SSL
+            "sslmode": "require",
             "connect_timeout": 10,
         }
     )

@@ -1687,10 +1687,10 @@ async function installPWA() {
 
 /* =========================== API CONFIG =========================== */
 const API = (() => {
-  // If opened as file:// fallback to localhost, otherwise use same origin
-  const base = (window.location.protocol === 'file:')
-    ? 'http://localhost:8000/api'
-    : `${window.location.protocol}//${window.location.host}/api`;
+  // If BACKEND_URL is set (Vercel deployment), use it. Otherwise use same origin (Render).
+  // ⚙️ SET YOUR RENDER BACKEND URL HERE when hosting frontend on Vercel
+  const BACKEND_URL = window.__BACKEND_URL__ || ''; // e.g. 'https://smart-attendance-api.onrender.com'
+  const base = BACKEND_URL ? `${BACKEND_URL}/api` : `${window.location.protocol}//${window.location.host}/api`;
 
   const token = () => localStorage.getItem('sas_token');
 
@@ -1832,7 +1832,7 @@ function routeUser(user) {
 
 /* Branch options per course */
 const BRANCH_MAP = {
-  'B.Tech': ['CSE (Computer Science & Engineering)','ECE (Electronics & Communication)','ME (Mechanical Engineering)','Civil Engineering','EE (Electrical Engineering)','IT (Information Technology)','Chemical Engineering','Biotechnology','Aerospace Engineering','CSE(AI-ML-DL)','CSE(IBM)'],
+  'B.Tech': ['CSE (Computer Science & Engineering)','ECE (Electronics & Communication)','ME (Mechanical Engineering)','Civil Engineering','EE (Electrical Engineering)','IT (Information Technology)','Chemical Engineering','Biotechnology','Aerospace Engineering'],
   'B.E':    ['CSE','ECE','ME','Civil','EE','IT','Chemical','Biotechnology'],
   'BCA':    ['BCA (General)','BCA with Data Science','BCA with Cybersecurity'],
   'MCA':    ['MCA (General)','MCA with AI/ML','MCA with Cloud Computing'],
@@ -2570,7 +2570,7 @@ async function renderTimetable(c) {
                     <td><strong>${sl.start_time} - ${sl.end_time}</strong></td>
                     <td>${sl.course_name||'?'}</td>
                     <td><span class="chip">${sl.branch||'-'}</span></td>
-                    <td><span class="badge bg-blue">Sec ${sl.section||'-'}</span></td>
+                    <td><span class="badge bg-blue">Sec ${sl.section||'-'}</span>${sl.sub_section?` <span class="badge bg-orange">Batch ${sl.sub_section}</span>`:''}</td>
                     <td>${sl.semester||'-'}</td>
                     <td>${sl.faculty_name||'-'}</td>
                     <td>${sl.room||'-'}</td>
@@ -2659,6 +2659,20 @@ async function renderTimetable(c) {
               </select>
             </div>
           </div>
+          <!-- Sub-section for labs -->
+          <div class="form-group" style="margin-bottom:8px;">
+            <label class="form-label">
+              Sub-section / Lab Batch
+              <span style="font-weight:400;color:var(--muted);font-size:.78rem;">(optional — only for lab classes)</span>
+            </label>
+            <input class="form-control" id="sl_subsection" placeholder="e.g. A1 or A2 — leave blank for theory/all students"
+              style="border-color:var(--border);"
+              oninput="document.getElementById('sl_subsection_hint').style.display=this.value?'block':'none';document.getElementById('sl_subsection_val').textContent=this.value.toUpperCase();">
+            <div id="sl_subsection_hint" style="display:none;margin-top:4px;padding:6px 10px;background:#fef3c7;border-radius:6px;font-size:.78rem;color:#92400e;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              Only students with batch <strong id="sl_subsection_val"></strong> can mark attendance for this slot.
+            </div>
+          </div>
           <div class="form-row" style="margin-bottom:0;">
             <div class="form-group" style="margin-bottom:0;">
               <label class="form-label">Semester</label>
@@ -2715,10 +2729,11 @@ async function saveSlot() {
   const end       = document.getElementById('sl_end').value;
   const facultyId = parseInt(document.getElementById('sl_faculty').value);
   const room      = document.getElementById('sl_room').value.trim();
-  const branch    = document.getElementById('sl_branch').value;
-  const section   = document.getElementById('sl_section').value;
-  const semester  = document.getElementById('sl_semester').value;
-  const courseType= document.getElementById('sl_coursetype').value;
+  const branch      = document.getElementById('sl_branch').value;
+  const section     = document.getElementById('sl_section').value;
+  const subSection  = (document.getElementById('sl_subsection')?.value || '').trim().toUpperCase();
+  const semester    = document.getElementById('sl_semester').value;
+  const courseType  = document.getElementById('sl_coursetype').value;
 
   if (!courseId)  { toast('Please select a course','warning'); return; }
   if (!facultyId) { toast('Please select a faculty','warning'); return; }
@@ -2729,7 +2744,9 @@ async function saveSlot() {
     await API.post('/timetable', {
       course_id: courseId, faculty_id: facultyId,
       day_of_week: day, start_time: start, end_time: end,
-      room, branch, section, semester, course_type: courseType,
+      room, branch, section,
+      sub_section: subSection || null,
+      semester, course_type: courseType,
     });
     document.getElementById('addSlotModal').classList.remove('show');
     toast(' Timetable slot added!','success');
@@ -3254,7 +3271,7 @@ async function renderFacTimetable(c) {
 
         html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);">';
         html += '<div>';
-        html += '<div style="font-weight:600;">' + (sl.course_name||'?') + ' <span class="badge bg-blue">Sec ' + (sl.section||'-') + '</span></div>';
+        html += '<div style="font-weight:600;">' + (sl.course_name||'?') + ' <span class="badge bg-blue">Sec ' + (sl.section||'-') + '</span>' + (sl.sub_section ? ' <span class="badge bg-orange">Batch '+sl.sub_section+'</span>' : '') + '</div>';
         html += '<div style="font-size:.8rem;color:var(--muted);">' + sl.start_time + ' - ' + sl.end_time + ' &nbsp;&middot;&nbsp; ' + (sl.room||'No room') + ' &nbsp;&middot;&nbsp; ' + (sl.branch||'All branches') + '</div>';
         html += '</div>';
         html += '<div style="display:flex;gap:8px;align-items:center;">' + actionHtml + '</div>';

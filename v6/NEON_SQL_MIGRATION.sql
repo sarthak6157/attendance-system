@@ -45,3 +45,10 @@ CREATE TABLE IF NOT EXISTS timetable_slots (
 );
 
 SELECT 'Migration complete!' as status;
+
+-- ── v9: Add sub_section column ─────────────────────────────────────────────
+ALTER TABLE timetable_slots ADD COLUMN IF NOT EXISTS sub_section VARCHAR(20) DEFAULT NULL;
+ALTER TABLE sessions        ADD COLUMN IF NOT EXISTS sub_section VARCHAR(20) DEFAULT NULL;
+
+COMMENT ON COLUMN timetable_slots.sub_section IS 'Optional lab batch e.g. A1, A2. If set, only that batch marks attendance.';
+COMMENT ON COLUMN sessions.sub_section        IS 'Optional lab batch e.g. A1, A2. If set, only that batch marks attendance.';

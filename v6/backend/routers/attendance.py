@@ -56,6 +56,17 @@ def mark_full_flow(
     if not session:
         raise HTTPException(status_code=404, detail="Invalid or expired QR code.")
 
+    # Sub-section check — if session has a sub_section set (lab batch),
+    # only students whose course matches that sub_section can mark attendance
+    if session.sub_section:
+        student_subsec = (current_user.course or "").strip().upper()
+        session_subsec = session.sub_section.strip().upper()
+        if student_subsec != session_subsec:
+            raise HTTPException(
+                status_code=403,
+                detail=f"This lab session is for batch {session.sub_section} only. Your batch is {current_user.course or 'not set'}."
+            )
+
     # GPS check — server-side
     if session.gps_lat and session.gps_lng:
         if not payload.student_lat or not payload.student_lng:

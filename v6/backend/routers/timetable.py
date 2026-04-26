@@ -26,6 +26,7 @@ class SlotCreate(BaseModel):
     room:        Optional[str] = None
     branch:      Optional[str] = None
     section:     Optional[str] = None
+    sub_section: Optional[str] = None   # e.g. "A1","A2" — only for labs
     semester:    Optional[str] = None
     course_type: Optional[str] = None
 
@@ -39,6 +40,7 @@ class SlotOut(BaseModel):
     room:        Optional[str]
     branch:      Optional[str]
     section:     Optional[str]
+    sub_section: Optional[str] = None
     semester:    Optional[str]
     course_type: Optional[str]
     is_active:   bool
@@ -106,15 +108,22 @@ def list_slots(
 
     # Section filter:
     # Students see their main section (theory) AND their subsection (labs)
-    # e.g. section="A" + subsection="A1" → show slots where section IN ('A', 'A1')
+    # If slot has sub_section set → only students whose course matches sub_section can see it
+    # If slot has no sub_section → all students in that section can see it
     if effective_section:
         sec = effective_section.strip().upper()
         if current_user.role == UserRole.student and effective_subsection:
             subsec = effective_subsection.strip().upper()
-            q = q.filter(or_(
-                func.lower(TimetableSlot.section) == sec.lower(),
-                func.lower(TimetableSlot.section) == subsec.lower()
-            ))
+            from sqlalchemy import and_, or_
+            q = q.filter(
+                and_(
+                    func.lower(TimetableSlot.section) == sec.lower(),
+                    or_(
+                        TimetableSlot.sub_section == None,          # theory — no sub_section
+                        func.upper(TimetableSlot.sub_section) == subsec  # lab matching subsection
+                    )
+                )
+            )
         else:
             q = q.filter(func.lower(TimetableSlot.section) == sec.lower())
 
@@ -208,6 +217,7 @@ def go_live(
         location     = slot.room,
         branch       = slot.branch,
         section      = slot.section,
+        sub_section  = slot.sub_section,   # pass sub_section to session
         semester     = slot.semester,
         course_type  = slot.course_type,
         gps_lat      = payload.gps_lat,

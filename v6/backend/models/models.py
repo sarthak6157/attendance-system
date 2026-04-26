@@ -95,6 +95,7 @@ class TimetableSlot(Base):
     room        = Column(String(100), nullable=True)
     branch      = Column(String(150), nullable=True)
     section     = Column(String(20),  nullable=True)
+    sub_section = Column(String(20),  nullable=True)         # e.g. "A1","A2" for labs only
     semester    = Column(String(20),  nullable=True)
     course_type = Column(String(100), nullable=True)
     is_active   = Column(Boolean, default=True)
@@ -116,6 +117,7 @@ class Session(Base):
     location      = Column(String(200), nullable=True)
     branch        = Column(String(150), nullable=True)
     section       = Column(String(20),  nullable=True)
+    sub_section   = Column(String(20),  nullable=True)       # e.g. "A1","A2" for lab sessions
     semester      = Column(String(20),  nullable=True)
     course_type   = Column(String(100), nullable=True)
     gps_lat       = Column(String(50),  nullable=True)
